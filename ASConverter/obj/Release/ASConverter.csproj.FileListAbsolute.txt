@@ -1,0 +1,12 @@
+D:\repositories\denxc\asconverter\ASConverter\bin\Release\ASConverter.exe.config
+D:\repositories\denxc\asconverter\ASConverter\bin\Release\ASConverter.Designer.cs
+D:\repositories\denxc\asconverter\ASConverter\bin\Release\ASConverter.settings
+D:\repositories\denxc\asconverter\ASConverter\bin\Release\ASConverter.exe
+D:\repositories\denxc\asconverter\ASConverter\bin\Release\ASConverter.pdb
+D:\repositories\denxc\asconverter\ASConverter\bin\Release\EPPlus.dll
+D:\repositories\denxc\asconverter\ASConverter\bin\Release\EPPlus.xml
+D:\repositories\denxc\asconverter\ASConverter\obj\Release\ASConverter.MainForm.resources
+D:\repositories\denxc\asconverter\ASConverter\obj\Release\ASConverter.Properties.Resources.resources
+D:\repositories\denxc\asconverter\ASConverter\obj\Release\ASConverter.csproj.GenerateResource.Cache
+D:\repositories\denxc\asconverter\ASConverter\obj\Release\ASConverter.exe
+D:\repositories\denxc\asconverter\ASConverter\obj\Release\ASConverter.pdb
