@@ -21,10 +21,12 @@ namespace ASConverter {
 
             var count = 0;
             for (var i = 0; i < orders.Count; ++i) {
-                var order = orders[i];                
+                var order = orders[i];
                 if (AddOrderToFile(order, pck)) {
                     count++;
-                }                
+                } else {
+                    order.WasAdded = true;
+                }
             }
 
             AddOrdersToDefaultList(orders, pck);
@@ -84,7 +86,11 @@ namespace ASConverter {
             if (isCheckDublicats && CheckExisting(exelList, order)) {
                 return false;
             }
-            order.WasAdded = true;            
+
+            if (order.WasAdded) {
+                return false;
+            }
+            
             var rowIndex = FindLastRowIndex(exelList);
             exelList.InsertRow(rowIndex, 1);
             exelList.Row(rowIndex).Style.Font.Color.SetColor(Color.Green);
@@ -161,6 +167,14 @@ namespace ASConverter {
             }
 
             return true;
+        }
+
+        internal void Generate(string fileName)
+        {
+            var xlsFile = new FileInfo(fileName);
+            var pck = new ExcelPackage(xlsFile);
+            pck.Workbook.Worksheets.Add("Лист 1");
+            pck.Save();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Windows.Forms;
@@ -63,6 +64,16 @@ namespace ASConverter {
                 return;
             }
 
+            var removed = new List<string>();
+            foreach (var sourceFile in sourceFiles) {
+                if (!File.Exists(sourceFile)) {
+                    removed.Add(sourceFile);
+                }
+            }
+            foreach (var remFile in removed) {
+                sourceFiles.Remove(remFile);
+            }
+
             sourceBox.Items.Clear();
             foreach (var sourceFile in sourceFiles) {
                 var fileName = sourceFile.Substring(sourceFile.LastIndexOf('\\') + 1);
@@ -75,6 +86,19 @@ namespace ASConverter {
             var destFiles = configuration.DestFiles;
             if (destFiles == null || destFiles.Count == 0) {
                 return;
+            }
+
+            var removed = new List<string>();
+            foreach (var destFile in destFiles)
+            {
+                if (!File.Exists(destFile))
+                {
+                    removed.Add(destFile);
+                }
+            }
+            foreach (var remFile in removed)
+            {
+                destFiles.Remove(remFile);
             }
 
             destBox.Items.Clear();
@@ -279,6 +303,39 @@ namespace ASConverter {
                 exportAndOpenButton.Enabled = true;
             }
             
+        }
+
+        private void новыйОтчетToolStripMenuItem_Click_1(object sender, EventArgs e)
+        {
+            var saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "Файл Excel (*.xlsx)|*.xlsx";
+            if (saveFileDialog.ShowDialog() == DialogResult.OK) {
+                var fileName = saveFileDialog.FileName;
+                if (File.Exists(fileName)) {
+                    MessageBox.Show("Такой файл уже существует.");
+                    return;
+                }
+                try
+                {
+                    new ASExporter().Generate(fileName);
+                    var configuration = ASConverter.Default;
+                    if (configuration.DestFiles == null) {
+                        configuration.DestFiles = new StringCollection();
+                    }
+                    if (!configuration.DestFiles.Contains(fileName)) {
+                        configuration.DestFiles.Add(fileName);
+                        UpdateDestFiles();
+                    }
+                }
+                catch (Exception ex) {
+                    MessageBox.Show("При создании отчета произошла ошибка: " + ex.Message);
+                }
+            }
+        }
+
+        private void оПрограммеToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Версия 1.0");
         }
     }
 }
