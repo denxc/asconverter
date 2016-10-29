@@ -32,17 +32,31 @@ namespace ASConverter {
         private static string NO_NDS = "безндс";
         private static string NO_NDS1 = "ндснеоблагается";
 
+        private static string START_AMOUNT = "НачальныйОстаток";
+        private static string END_AMOUNT = "КонечныйОстаток";
 
-        public List<OrderEntity> LoadOrders(string aFileName) {
+
+        public List<OrderEntity> LoadOrders(string aFileName, out double aStartAmount, out double aEndAmount) {
             var orders = new List<OrderEntity>();            
             var lines = File.ReadAllLines(aFileName, Encoding.GetEncoding("Windows-1251"));
+            aStartAmount = 0;
+            aEndAmount = 0;
+            var findStartAmount = false;
             for (var i = 0; i < lines.Length; ++i) {
+                if (lines[i].StartsWith(END_AMOUNT)) {
+                    aEndAmount = Convert.ToDouble(lines[i].Substring(lines[i].LastIndexOf('=') + 1).Replace('.', ','));
+                }
+                if (!findStartAmount && lines[i].StartsWith(START_AMOUNT)) {
+                    aStartAmount = Convert.ToDouble(lines[i].Substring(lines[i].LastIndexOf('=') + 1).Replace('.', ','));
+                    findStartAmount = true;
+                }
+
                 if (lines[i].StartsWith(START_ORDER)) {
                     var order = LoadOrder(lines, i + 1);                    
                     orders.Add(order);                    
                     Application.DoEvents();
                 }
-            }
+            }            
 
             return orders;
         }

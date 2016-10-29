@@ -244,10 +244,12 @@ namespace ASConverter {
                     return;
                 }
 
-                try {
+                try {                    
                     var exporter = new ASExporter();
-                    var count = exporter.Export(sourceFile, destFile);
-                    MessageBox.Show("Успешно добавлено операций: " + count);
+                    string message;
+                    var count = exporter.Export(sourceFile, destFile, out message);
+                    MessageBox.Show("Успешно добавлено операций: " + count + "\n" + message);
+
                 } catch (Exception ex) {
                     MessageBox.Show("При экспорте данных произошла ошибка: " + ex.Message);
                     return;
@@ -287,8 +289,9 @@ namespace ASConverter {
 
                 try {
                     var exporter = new ASExporter();
-                    var count = exporter.Export(sourceFile, destFile);
-                    MessageBox.Show("Успешно добавлено операций: " + count);
+                    string message;
+                    var count = exporter.Export(sourceFile, destFile, out message);
+                    MessageBox.Show("Успешно добавлено операций: " + count + "\n" + message);
                 } catch (Exception ex) {
                     MessageBox.Show("При экспорте данных произошла ошибка: " + ex.Message);
                     return;

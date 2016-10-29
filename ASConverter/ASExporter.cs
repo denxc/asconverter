@@ -11,19 +11,28 @@ namespace ASConverter {
         private static string[] exelColumns = { "Номер", "Дата", "Поступление", "Расход", "Контраген", "Ставка НДС", "Сумма НДС", "ИНН контрагента", "КПП Контрагента", "Р.счет контрагента", "Банк", "Назначение платежа" };
         private static string DEFAULT_REPORT = "Консолидированный отчет";
 
-        public int Export(string aSourceFile, string aDestFile) {
-            var orders = new OrdersProvider().LoadOrders(aSourceFile);
+        private ExcelWorksheet lastList = null;
+
+        public int Export(string aSourceFile, string aDestFile, out string aMessage) {
+            var startAmount = 0.0;
+            var endAmount = 0.0;
+            var orders = new OrdersProvider().LoadOrders(aSourceFile, out startAmount, out endAmount);
 
             var xlsFile = new FileInfo(aDestFile);
             var pck = new ExcelPackage(xlsFile);
 
             ClearAllColors(pck);
 
+            var spisano = 0.0;
+            var postupilo = 0.0;
+
             var count = 0;
-            for (var i = 0; i < orders.Count; ++i) {
+            for (var i = orders.Count - 1; i >= 0; --i) {
                 var order = orders[i];
-                if (AddOrderToFile(order, pck)) {
+                if (AddOrderToFile(order, pck, startAmount)) {
                     count++;
+                    spisano += order.amountSpisano;
+                    postupilo += order.amountPostupilo;
                 } else {
                     order.WasAdded = true;
                 }
@@ -31,8 +40,28 @@ namespace ASConverter {
 
             AddOrdersToDefaultList(orders, pck);
 
+            aMessage = string.Empty;
+            if (lastList != null) {
+                CheckAmountResult(endAmount, out aMessage);
+            }
+
             pck.Save();
             return count;
+        }
+
+        private void CheckAmountResult(double endAmount, out string aMessage) {
+            var lastRowIndex = lastList.Dimension.End.Row;
+            var startAmount = Convert.ToDouble(lastList.Cells[lastRowIndex, 1].Value);
+            lastList.Cells[lastRowIndex, 3].Calculate();
+            lastList.Cells[lastRowIndex, 4].Calculate();
+            var postupilo = Convert.ToDouble(lastList.Cells[lastRowIndex, 3].Value);
+            var spisano = Convert.ToDouble(lastList.Cells[lastRowIndex, 4].Value);
+
+            aMessage = string.Empty;
+            var expected = startAmount + postupilo - spisano;            
+            if (Math.Abs(expected - endAmount) > 0.0001) {
+                aMessage = string.Format("Возможно, за некоторый период выписки не импортированы.\nОжидался остаток: {0:0.##}, остаток в отчете: {1:0.##}", endAmount, expected);
+            }
         }
 
         private void AddOrdersToDefaultList(List<OrderEntity> orders, ExcelPackage pck) {
@@ -49,8 +78,8 @@ namespace ASConverter {
                 list = lists.Add(DEFAULT_REPORT);
             }
 
-            foreach (var order in orders) {
-                AddOrderToList(list, order, false);
+            for (var i = orders.Count - 1; i >= 0; --i) { 
+                AddOrderToList(list, orders[i], false, 0.0);
             }            
         }
 
@@ -66,21 +95,23 @@ namespace ASConverter {
             }
         }
 
-        private bool AddOrderToFile(OrderEntity order, ExcelPackage pck) {
+        private bool AddOrderToFile(OrderEntity order, ExcelPackage pck, double aStartAmount) {
             var lists = pck.Workbook.Worksheets;
             for (var i = 1; i <= lists.Count; ++i) {                
-                if (order.OwnerBank.ToLower().StartsWith(lists[i].Name.ToLower())) {
-                    return AddOrderToList(lists[i], order, true);
+                if (order.OwnerBank.ToLower().StartsWith(lists[i].Name.ToLower()) ||
+                    lists[i].Name.ToLower().StartsWith(order.OwnerBank.ToLower())) {
+                    lastList = lists[i];
+                    return AddOrderToList(lists[i], order, true, 0.0);
                 }
             }
 
-            var list = lists.Add(order.OwnerBank);
-            return AddOrderToList(list, order, true);
+            lastList = lists.Add(order.OwnerBank);            
+            return AddOrderToList(lastList, order, true, aStartAmount);
         }
 
-        private bool AddOrderToList(ExcelWorksheet exelList, OrderEntity order, bool isCheckDublicats) {
+        private bool AddOrderToList(ExcelWorksheet exelList, OrderEntity order, bool isCheckDublicats, double aStartAmount) {
             if (!CheckPreparation(exelList)) {
-                PrepareExelList(exelList);
+                PrepareExelList(exelList, aStartAmount);
             }
 
             if (isCheckDublicats && CheckExisting(exelList, order)) {
@@ -142,12 +173,14 @@ namespace ASConverter {
             return exelList.Dimension.End.Row;
         }
 
-        private void PrepareExelList(ExcelWorksheet exelList) {
+        private void PrepareExelList(ExcelWorksheet exelList, double aStartAmount) {
             for (var i = 0; i < exelColumns.Length; ++i) {                
                 exelList.Cells[1, i + 1].Value = exelColumns[i];
                 var column = exelList.Column(i + 1);
                 column.AutoFit();                
             }
+            exelList.Cells[2, 1].Value = aStartAmount;
+            exelList.Cells[2, 1].Style.Font.Color.SetColor(Color.White);
             exelList.Cells[2, 4].Value = "Итого";
             exelList.Cells[2, 3].Value = "Итого";            
         }
