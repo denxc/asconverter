@@ -9,6 +9,9 @@ namespace ASConverter {
         public double amountSpisano;
         public string OwnerName;
         public string OwnerBank;
+        public string OwnerInn;
+        public string OwnerKPP;
+        public string OwnerAccount;
         public string ContractorName;        
         public int Nds;
         public double NdsSum;

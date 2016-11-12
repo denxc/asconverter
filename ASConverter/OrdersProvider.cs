@@ -31,12 +31,12 @@ namespace ASConverter {
 
         private static string NO_NDS = "безндс";
         private static string NO_NDS1 = "ндснеоблагается";
+        private static string NO_NDS2 = "безналога";
 
         private static string START_AMOUNT = "НачальныйОстаток";
         private static string END_AMOUNT = "КонечныйОстаток";
 
-
-        public List<OrderEntity> LoadOrders(string aFileName, out double aStartAmount, out double aEndAmount) {
+        public static List<OrderEntity> LoadOrders(string aFileName, out double aStartAmount, out double aEndAmount) {
             var orders = new List<OrderEntity>();            
             var lines = File.ReadAllLines(aFileName, Encoding.GetEncoding("Windows-1251"));
             aStartAmount = 0;
@@ -61,7 +61,7 @@ namespace ASConverter {
             return orders;
         }
 
-        private OrderEntity LoadOrder(string[] lines, int startIndex) {
+        private static OrderEntity LoadOrder(string[] lines, int startIndex) {
             var order = new OrderEntity();
             order.WasAdded = false;
             var amount = FindLine(lines, AMOUNT, startIndex).Replace('.', ',');
@@ -91,17 +91,17 @@ namespace ASConverter {
 
             var tdestination = destination.ToLower().Replace(" ", string.Empty);
             var amountValue = Convert.ToDouble(amount.Substring(amount.LastIndexOf('=') + 1));
-            if (tdestination.Contains(NO_NDS) || tdestination.Contains(NO_NDS1)) {
-                order.Nds = 0;                
+            if (tdestination.Contains(NO_NDS) || tdestination.Contains(NO_NDS1) || tdestination.Contains(NO_NDS2)) {
+                order.Nds = -1;                
             } else {
-                if (tdestination.Contains("18%") || tdestination.Contains("18.00%") || tdestination.Contains("18.0%")) {
+                if (tdestination.Contains("18%") || tdestination.Contains("18.00%") || tdestination.Contains("18.0%") || destination.ToLower().Contains("ндс 18 ")) {
                     order.Nds = 18;
-                } else if (tdestination.Contains("10%") || tdestination.Contains("10.0%") || tdestination.Contains("10.00%")) {
+                } else if (tdestination.Contains("10%") || tdestination.Contains("10.0%") || tdestination.Contains("10.00%") || destination.ToLower().Contains("ндс 10 ")) {
                     order.Nds = 10;
-                } else if (tdestination.Contains("0%")) {
-                    order.Nds = -1;
+                } else if (tdestination.Contains("0%") || destination.ToLower().Contains("ндс 0 ")) {
+                    order.Nds = 0;
                 } else {
-                    order.Nds = -1;
+                    order.Nds = -2;
                 }
             }
 
@@ -120,7 +120,10 @@ namespace ASConverter {
                     order.OwnerName = poluchatel1.Substring(poluchatel1.LastIndexOf('=') + 1);
                 }
                 order.OwnerBank = poluchatelBank.Substring(poluchatelBank.LastIndexOf('=') + 1);
-                order.ContractorName = platelshik?.Substring(platelshik.LastIndexOf('=') + 1);
+                order.OwnerInn = poluchatelInn?.Substring(poluchatelInn.LastIndexOf('=') + 1);
+                order.OwnerKPP = poluchatelKpp?.Substring(poluchatelKpp.LastIndexOf('=') + 1);
+                order.OwnerAccount = poluchatelSchet.Substring(poluchatelSchet.LastIndexOf('=') + 1);
+                order.ContractorName = platelshik?.Substring(platelshik.LastIndexOf('=') + 1);                
                 if (string.IsNullOrEmpty(order.ContractorName)) {
                     order.ContractorName = platelshik1.Substring(platelshik1.LastIndexOf('=') + 1);
                 }
@@ -137,6 +140,9 @@ namespace ASConverter {
                     order.OwnerName = platelshik1.Substring(platelshik1.LastIndexOf('=') + 1);
                 }
                 order.OwnerBank = platelBank.Substring(platelBank.LastIndexOf('=') + 1);
+                order.OwnerInn = platelInn?.Substring(platelInn.LastIndexOf('=') + 1);
+                order.OwnerKPP = platelKpp?.Substring(platelKpp.LastIndexOf('=') + 1);
+                order.OwnerAccount = platelSchet.Substring(platelSchet.LastIndexOf('=') + 1);
                 order.ContractorName = poluchatel?.Substring(poluchatel.LastIndexOf('=') + 1);
                 if (string.IsNullOrEmpty(order.ContractorName)) {
                     order.ContractorName = poluchatel1.Substring(poluchatel1.LastIndexOf('=') + 1);
@@ -147,10 +153,15 @@ namespace ASConverter {
                 order.ContractorAccount = poluchatelSchet.Substring(poluchatelSchet.LastIndexOf('=') + 1);
             }
 
+            order.OwnerInn = order.OwnerInn?.Replace("ИНН " + order.OwnerInn, string.Empty);
+            order.OwnerInn = order.ContractorINN?.Replace("ИНН " + order.ContractorINN, string.Empty);
+            order.OwnerInn = order.OwnerInn?.Replace(order.OwnerInn, string.Empty);
+            order.OwnerInn = order.ContractorINN?.Replace(order.ContractorINN, string.Empty);
+
             return order;                                 
         }
 
-        private string FindLine(string[] lines, string startStr, int startIndex) {
+        private static string FindLine(string[] lines, string startStr, int startIndex) {
             for (var i = startIndex; i < lines.Length; ++i) {
                 var line = lines[i];
                 if (line.StartsWith(END_ORDER)) {

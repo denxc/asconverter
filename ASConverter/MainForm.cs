@@ -1,344 +1,248 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.Specialized;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
 namespace ASConverter {
     public partial class MainForm : Form {
+        private string sourceFilePath = string.Empty;
+        private string destFilePath = string.Empty;
+
         public MainForm() {
-            InitializeComponent();
+            InitializeComponent();            
         }
 
-        private void addSourceFileButton_Click(object sender, EventArgs e) {
+        private void openSourceFileButton_Click(object sender, EventArgs e) {
             var openFileDialog = new OpenFileDialog();
-            openFileDialog.Multiselect = true;    
+            openFileDialog.Multiselect = false;
             openFileDialog.Filter = "Текстовые файлы (*.txt)|*.txt";
 
             if (openFileDialog.ShowDialog() != DialogResult.OK) {
                 return;
             }
 
-            var sourceFiles = openFileDialog.FileNames;
+            var sourceFile = openFileDialog.FileName;
 
-            if (sourceFiles == null || sourceFiles.Length == 0) {
-                return;
-            }
-
-            var configuration = ASConverter.Default;
-            try {                
-                var existedSourceFiles = configuration.SourceFiles;
-                if (existedSourceFiles == null) {
-                    existedSourceFiles = new StringCollection();
-                }
-
-                foreach (var newSourceFile in sourceFiles) {
-                    var isFind = false;
-                    foreach (var existedSourceFile in existedSourceFiles) {
-                        if (existedSourceFile.Equals(newSourceFile)) {
-                            isFind = true;
-                            break;
-                        }
-                    }
-
-                    if (!isFind) {
-                        existedSourceFiles.Add(newSourceFile);
-                    }
-                }
-
-                if (configuration.SourceFiles == null) {
-                    configuration.SourceFiles = existedSourceFiles;
-                }
-                configuration.Save();
-            } catch (Exception ex) {
-                MessageBox.Show("При работе с конфигурацией входных файлов возникла проблема: " + ex.Message);
-            } finally {
-                UpdateSourceFiles();
-            }                        
+            SelectSourceFile(sourceFile);
         }
 
-        private void UpdateSourceFiles() {
-            var configuration = ASConverter.Default;
-            var sourceFiles = configuration.SourceFiles;
-            if (sourceFiles == null || sourceFiles.Count == 0) {
+        private void SelectSourceFile(string sourceFile) {
+            if (sourceFile == null || sourceFile.Length == 0) {
                 return;
             }
 
-            var removed = new List<string>();
-            foreach (var sourceFile in sourceFiles) {
-                if (!File.Exists(sourceFile)) {
-                    removed.Add(sourceFile);
-                }
-            }
-            foreach (var remFile in removed) {
-                sourceFiles.Remove(remFile);
-            }
+            var sourceFileName = sourceFile.Substring(sourceFile.LastIndexOf('\\') + 1);
+            sourceFileNameBox.Text = sourceFileName;
+            sourceFileInfoBox.Text = sourceFile;
 
-            sourceBox.Items.Clear();
-            foreach (var sourceFile in sourceFiles) {
-                var fileName = sourceFile.Substring(sourceFile.LastIndexOf('\\') + 1);
-                sourceBox.Items.Add(fileName);
-            }
-        }
-
-        private void UpdateDestFiles() {
-            var configuration = ASConverter.Default;
-            var destFiles = configuration.DestFiles;
-            if (destFiles == null || destFiles.Count == 0) {
-                return;
-            }
-
-            var removed = new List<string>();
-            foreach (var destFile in destFiles)
-            {
-                if (!File.Exists(destFile))
-                {
-                    removed.Add(destFile);
-                }
-            }
-            foreach (var remFile in removed)
-            {
-                destFiles.Remove(remFile);
-            }
-
-            destBox.Items.Clear();
-            foreach (var destFile in destFiles) {
-                var fileName = destFile.Substring(destFile.LastIndexOf('\\') + 1);
-                destBox.Items.Add(fileName);
-            }
+            sourceFilePath = sourceFile;
+            sourceFileNameBox.BackColor = Color.White;            
         }
 
         private void MainForm_Load(object sender, EventArgs e) {
-            UpdateSourceFiles();
-            UpdateDestFiles();
         }
 
-        private void removeSourceFileButton_Click(object sender, EventArgs e) {
-            if (sourceBox.SelectedIndex == -1) {
-                MessageBox.Show("Выберите файл для удаления из списка.");
-                return;
-            }
-
-            try {
-                var configuration = ASConverter.Default;
-                var sourceFiles = configuration.SourceFiles;
-                sourceFiles.RemoveAt(sourceBox.SelectedIndex);
-                configuration.Save();
-            } catch (Exception ex) {
-                MessageBox.Show("Ошибка при работе с конфигурацией: " + ex.Message);
-            }
-            sourceBox.Items.RemoveAt(sourceBox.SelectedIndex);            
-        }
-
-        private void addDestFileButton_Click(object sender, EventArgs e) {
+        private void openDestFileButton_Click(object sender, EventArgs e) {
             var openFileDialog = new OpenFileDialog();
-            openFileDialog.Multiselect = true;
-            openFileDialog.Filter = "Файлы Excel (*.xlsx)|*.xlsx";
+            openFileDialog.Multiselect = false;
+            openFileDialog.Filter = "Файлы Excel 1997-2003 (*.xls)|*.xls";
 
             if (openFileDialog.ShowDialog() != DialogResult.OK) {
                 return;
             }
 
-            var destFiles = openFileDialog.FileNames;
+            var destFile = openFileDialog.FileName;
 
-            if (destFiles == null || destFiles.Length == 0) {
+            SelectDestFile(destFile);
+        }
+
+        private void SelectDestFile(string destFile) {
+            if (destFile == null || destFile.Length == 0) {
                 return;
             }
 
-            var configuration = ASConverter.Default;
+            var destFileName = destFile.Substring(destFile.LastIndexOf('\\') + 1);
+            destFileNameBox.Text = destFileName;
+            destFileInfoBox.Text = destFile;
+
+            destFilePath = destFile;
+            destFileNameBox.BackColor = Color.White;
+
+            TryLoadShields(destFilePath);
+        }
+
+        private void TryLoadShields(string aXlsFilePath) {
             try {
-                var existedDestFiles = configuration.DestFiles;
-                if (existedDestFiles == null) {
-                    existedDestFiles = new StringCollection();
+                if (string.IsNullOrEmpty(aXlsFilePath) || !File.Exists(aXlsFilePath)) {
+                    return;
                 }
 
-                foreach (var newDestFile in destFiles) {
-                    var isFind = false;
-                    foreach (var existedDestFile in existedDestFiles) {
-                        if (existedDestFile.Equals(newDestFile)) {
-                            isFind = true;
-                            break;
-                        }
-                    }
+                selectedShieldBox.Items.Clear();
+                selectedShieldBox.Text = string.Empty;
 
-                    if (!isFind) {
-                        existedDestFiles.Add(newDestFile);
-                    }
+                var shields = ASExporter.GetShields(destFilePath);
+                if (shields != null && shields.Length > 0) {
+                    selectedShieldBox.Items.AddRange(shields);
                 }
 
-                if (configuration.DestFiles == null) {
-                    configuration.DestFiles = existedDestFiles;
-                }
-                configuration.Save();
+                selectedShieldBox.Enabled = true;
             } catch (Exception ex) {
-                MessageBox.Show("При работе с конфигурацией входных файлов возникла проблема: " + ex.Message);
-            } finally {
-                UpdateDestFiles();
+                MessageBox.Show("При загрузке листов из файла произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                selectedShieldBox.Enabled = false;
             }
-        }
-
-        private void removeDestFileButton_Click(object sender, EventArgs e) {
-            if (destBox.SelectedIndex == -1) {
-                MessageBox.Show("Выберите файл для удаления из списка.");
-                return;
-            }
-
-            try {
-                var configuration = ASConverter.Default;
-                var destFiles = configuration.DestFiles;
-                destFiles.RemoveAt(destBox.SelectedIndex);
-                configuration.Save();
-            } catch (Exception ex) {
-                MessageBox.Show("Ошибка при работе с конфигурацией: " + ex.Message);
-            }
-            destBox.Items.RemoveAt(destBox.SelectedIndex);
-        }
-
-        private void sourceBox_SelectedIndexChanged(object sender, EventArgs e) {
-            if (sourceBox.SelectedIndex == -1) {
-                sourceFileInfoBox.Text = "Файл не выбран.";
-                return;
-            }
-
-            var configuration = ASConverter.Default;
-            var sourceFiles = configuration.SourceFiles;
-            sourceFileInfoBox.Text = sourceFiles[sourceBox.SelectedIndex];
-        }
-
-        private void destBox_SelectedIndexChanged(object sender, EventArgs e) {
-            if (destBox.SelectedIndex == -1) {
-                destFileInfoBox.Text = "Файл не выбран.";
-                return;
-            }
-
-            var configuration = ASConverter.Default;
-            var destFiles = configuration.DestFiles;
-            destFileInfoBox.Text = destFiles[destBox.SelectedIndex];
-        }
-
-        private void новыйОтчетToolStripMenuItem_Click(object sender, EventArgs e) {
-
         }
 
         private void exportButton_Click(object sender, EventArgs e) {
             exportButton.Enabled = false;
             exportAndOpenButton.Enabled = false;
-            try {
-                if (sourceBox.SelectedIndex == -1 || destBox.SelectedIndex == -1) {
-                    MessageBox.Show("Выберите файл экспорта и файл импорта.");
-                    return;
-                }
-
-                var configuration = ASConverter.Default;
-
-                var sourceFile = configuration.SourceFiles[sourceBox.SelectedIndex];
-                var destFile = configuration.DestFiles[destBox.SelectedIndex];
-
-                if (!File.Exists(sourceFile)) {
-                    MessageBox.Show("Отсутствует файл для импорта.");
-                    return;
-                }
-
-                if (!File.Exists(destFile)) {
-                    MessageBox.Show("Отсутствует файл для экспорта.");
-                    return;
-                }
-
-                try {                    
-                    var exporter = new ASExporter();
-                    string message;
-                    var count = exporter.Export(sourceFile, destFile, out message);
-                    MessageBox.Show("Успешно добавлено операций: " + count + "\n" + message);
-
-                } catch (Exception ex) {
-                    MessageBox.Show("При экспорте данных произошла ошибка: " + ex.Message);
-                    return;
-                }
-            } catch (Exception ex) {
-                MessageBox.Show("Непредвиенная ошибка: " + ex.Message);
-                return;
-            } finally {
-                exportButton.Enabled = true;
-                exportAndOpenButton.Enabled = true;
+            if (TryDoExport()) {
+                SelectDestFile(destFilePath);
             }
+            exportButton.Enabled = true;
+            exportAndOpenButton.Enabled = true;
         }
 
         private void exportAndOpenButton_Click(object sender, EventArgs e) {
             exportButton.Enabled = false;
             exportAndOpenButton.Enabled = false;
-            try {
-                if (sourceBox.SelectedIndex == -1 || destBox.SelectedIndex == -1) {
-                    MessageBox.Show("Выберите файл экспорта и файл импорта.");
-                    return;
-                }
-
-                var configuration = ASConverter.Default;
-
-                var sourceFile = configuration.SourceFiles[sourceBox.SelectedIndex];
-                var destFile = configuration.DestFiles[destBox.SelectedIndex];
-
-                if (!File.Exists(sourceFile)) {
-                    MessageBox.Show("Отсутствует файл для импорта.");
-                    return;
-                }
-
-                if (!File.Exists(destFile)) {
-                    MessageBox.Show("Отсутствует файл для экспорта.");
-                    return;
-                }
-
+            var result = TryDoExport();
+            exportButton.Enabled = true;
+            exportAndOpenButton.Enabled = true;
+            if (File.Exists(destFilePath) && result) {
                 try {
-                    var exporter = new ASExporter();
-                    string message;
-                    var count = exporter.Export(sourceFile, destFile, out message);
-                    MessageBox.Show("Успешно добавлено операций: " + count + "\n" + message);
+                    SelectDestFile(destFilePath);
+                    System.Diagnostics.Process.Start(destFilePath);
                 } catch (Exception ex) {
-                    MessageBox.Show("При экспорте данных произошла ошибка: " + ex.Message);
-                    return;
+                    MessageBox.Show("При открытии файла произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }            
+        }        
 
-                System.Diagnostics.Process.Start(destFile);
-            } catch (Exception ex) {
-                MessageBox.Show("Непредвиенная ошибка: " + ex.Message);
-                return;
-            } finally {
-                exportButton.Enabled = true;
-                exportAndOpenButton.Enabled = true;
-            }
-            
-        }
-
-        private void новыйОтчетToolStripMenuItem_Click_1(object sender, EventArgs e)
-        {
+        private void новыйОтчетToolStripMenuItem_Click_1(object sender, EventArgs e) {
             var saveFileDialog = new SaveFileDialog();
-            saveFileDialog.Filter = "Файл Excel (*.xlsx)|*.xlsx";
+            saveFileDialog.Filter = "Файл Excel 1997-2003 (*.xls)|*.xls";            
             if (saveFileDialog.ShowDialog() == DialogResult.OK) {
-                var fileName = saveFileDialog.FileName;
-                if (File.Exists(fileName)) {
-                    MessageBox.Show("Такой файл уже существует.");
-                    return;
-                }
-                try
-                {
-                    new ASExporter().Generate(fileName);
-                    var configuration = ASConverter.Default;
-                    if (configuration.DestFiles == null) {
-                        configuration.DestFiles = new StringCollection();
-                    }
-                    if (!configuration.DestFiles.Contains(fileName)) {
-                        configuration.DestFiles.Add(fileName);
-                        UpdateDestFiles();
-                    }
-                }
-                catch (Exception ex) {
+                var fileName = saveFileDialog.FileName;                
+                try {
+                    ASExporter.Generate(fileName);
+                    SelectDestFile(fileName);
+                } catch (Exception ex) {
                     MessageBox.Show("При создании отчета произошла ошибка: " + ex.Message);
                 }
             }
         }
 
-        private void оПрограммеToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("Версия 1.0");
+        private void оПрограммеToolStripMenuItem1_Click(object sender, EventArgs e) {
+            MessageBox.Show("Версия 2.0");
+        }
+
+        private void button1_Click(object sender, EventArgs e) {
+            this.Close();
+        }
+
+        private bool TryDoExport() {
+            if (string.IsNullOrEmpty(sourceFilePath)) {
+                MessageBox.Show("Выберите файл с операциями для экспорта.", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(destFilePath)) {
+                MessageBox.Show("Выберите файл назначения для импорта.", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                return false;
+            }
+
+            if (!File.Exists(sourceFilePath)) {
+                MessageBox.Show("Выбранный файл с операциями для экспорта не существует.", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            if (!File.Exists(destFilePath)) {
+                MessageBox.Show("Выбранный файл назначения для импорта не существует.", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
+            if (string.IsNullOrEmpty(selectedShieldBox.Text)) {
+                MessageBox.Show("Выберите существующий или введите имя нового листа для добавления операций.", "Сообщение", MessageBoxButtons.OK, MessageBoxIcon.Hand);
+                return false;
+            }
+
+            double startAmount;
+            double endAmount;
+            var orders = TryLoadOrders(sourceFilePath, out startAmount, out endAmount);
+            if (orders == null || orders.Length == 0) {
+                return false;
+            }            
+
+            if (TryCheckCompanyCorrection(destFilePath, orders[0]) == false) {
+                var dialogResult = MessageBox.Show(
+                    string.Format("Нельзя добавить операции компании {0} в файл, содержащий операции другой компании. \nУбедитель в правильности выбора файла назначения.", orders[0].OwnerName), 
+                    "Оповещение", 
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;                
+            }
+
+            if (TryCheckShieldCorrection(destFilePath, orders[0], startAmount) == false) {
+                return false;
+            }
+            
+            try {                    
+                var message = string.Empty;
+                var count = ASExporter.Export(destFilePath, selectedShieldBox.Text, orders, endAmount, out message);                
+                MessageBox.Show("Успешно добавлено операций: " + count + "\n" + message);
+                return true;
+            } catch (Exception ex) {
+                MessageBox.Show("При экспорте данных произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        private bool TryCheckShieldCorrection(string aXlsFile, OrderEntity orderEntity, double aStartAmount) {
+            try {
+                var destShield = selectedShieldBox.Text;
+                var shields = ASExporter.GetShields(aXlsFile);
+                if (shields != null) {
+                    foreach (var shield in shields) {
+                        if (destShield.Equals(shield)) {
+                            return true;
+                        }
+                    }
+                }
+
+                ASExporter.CreateNewShield(aXlsFile, destShield, orderEntity, aStartAmount);
+                return true;
+            } catch (Exception ex) {
+                MessageBox.Show("Ошибка при создании листа: " + ex.Message);
+                return false;
+            }            
+        }
+
+        private OrderEntity[] TryLoadOrders(string aTextFile, out double aStartAmount, out double aEndAmount) {
+            try {
+                var orders = OrdersProvider.LoadOrders(aTextFile, out aStartAmount, out aEndAmount);
+                return orders.ToArray();
+            } catch (Exception ex) {
+                MessageBox.Show("При загрузке операций из файла произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                aStartAmount = 0;
+                aEndAmount = 0;
+                return null;
+            }
+        }
+
+        private bool TryCheckCompanyCorrection(string aXlsFile, OrderEntity aOrder) {
+            if (string.IsNullOrEmpty(aXlsFile) || !File.Exists(aXlsFile)) {
+                return false;
+            }            
+            try {
+                var companyImm = ASExporter.GetCompanyInn(aXlsFile);
+
+                if (string.IsNullOrEmpty(companyImm) || companyImm.Equals(aOrder.OwnerInn)) {
+                    return true;
+                }
+            } catch (Exception ex) {
+                MessageBox.Show("Ошика при проверке корректности компании: " + ex.Message);
+            }            
+
+            return false;
         }
     }
 }

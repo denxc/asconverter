@@ -4,9 +4,9 @@ D:\repositories\denxc\asconverter\ASConverter\obj\Debug\ASConverter.Properties.R
 D:\repositories\denxc\asconverter\ASConverter\obj\Debug\ASConverter.csproj.GenerateResource.Cache
 D:\repositories\denxc\asconverter\ASConverter\obj\Debug\ASConverter.exe
 D:\repositories\denxc\asconverter\ASConverter\obj\Debug\ASConverter.pdb
-D:\repositories\denxc\asconverter\ASConverter\bin\Debug\ASConverter.Designer.cs
-D:\repositories\denxc\asconverter\ASConverter\bin\Debug\ASConverter.settings
 D:\repositories\denxc\asconverter\ASConverter\bin\Debug\ASConverter.exe.config
 D:\repositories\denxc\asconverter\ASConverter\obj\Debug\ASConverter.MainForm.resources
-D:\repositories\denxc\asconverter\ASConverter\bin\Debug\EPPlus.dll
-D:\repositories\denxc\asconverter\ASConverter\bin\Debug\EPPlus.xml
+D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.dll
+D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.OOXML.dll
+D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.OpenXml4Net.dll
+D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.OpenXmlFormats.dll
