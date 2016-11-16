@@ -120,7 +120,7 @@ namespace ASConverter {
                     order.OwnerName = poluchatel1.Substring(poluchatel1.LastIndexOf('=') + 1);
                 }
                 order.OwnerBank = poluchatelBank.Substring(poluchatelBank.LastIndexOf('=') + 1);
-                order.OwnerInn = poluchatelInn?.Substring(poluchatelInn.LastIndexOf('=') + 1);
+                order.OwnerInn = poluchatelInn.Substring(poluchatelInn.LastIndexOf('=') + 1);
                 order.OwnerKPP = poluchatelKpp?.Substring(poluchatelKpp.LastIndexOf('=') + 1);
                 order.OwnerAccount = poluchatelSchet.Substring(poluchatelSchet.LastIndexOf('=') + 1);
                 order.ContractorName = platelshik?.Substring(platelshik.LastIndexOf('=') + 1);                
@@ -140,7 +140,7 @@ namespace ASConverter {
                     order.OwnerName = platelshik1.Substring(platelshik1.LastIndexOf('=') + 1);
                 }
                 order.OwnerBank = platelBank.Substring(platelBank.LastIndexOf('=') + 1);
-                order.OwnerInn = platelInn?.Substring(platelInn.LastIndexOf('=') + 1);
+                order.OwnerInn = platelInn.Substring(platelInn.LastIndexOf('=') + 1);
                 order.OwnerKPP = platelKpp?.Substring(platelKpp.LastIndexOf('=') + 1);
                 order.OwnerAccount = platelSchet.Substring(platelSchet.LastIndexOf('=') + 1);
                 order.ContractorName = poluchatel?.Substring(poluchatel.LastIndexOf('=') + 1);
@@ -153,10 +153,22 @@ namespace ASConverter {
                 order.ContractorAccount = poluchatelSchet.Substring(poluchatelSchet.LastIndexOf('=') + 1);
             }
 
-            order.OwnerInn = order.OwnerInn?.Replace("ИНН " + order.OwnerInn, string.Empty);
-            order.OwnerInn = order.ContractorINN?.Replace("ИНН " + order.ContractorINN, string.Empty);
-            order.OwnerInn = order.OwnerInn?.Replace(order.OwnerInn, string.Empty);
-            order.OwnerInn = order.ContractorINN?.Replace(order.ContractorINN, string.Empty);
+            order.OwnerName = order.OwnerName.Replace("ИНН " + order.OwnerInn, string.Empty);
+            order.ContractorName = order.ContractorName.Replace("ИНН " + order.ContractorINN, string.Empty);
+            order.OwnerName = order.OwnerName.Replace(order.OwnerInn, string.Empty);
+            order.ContractorName = order.ContractorName.Replace(order.ContractorINN, string.Empty);
+
+            order.OwnerName = order.OwnerName.Replace("Общество с ограниченной ответственностью", "ООО");
+            order.OwnerName = order.OwnerName.Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО");
+            order.ContractorName = order.ContractorName.Replace("Общество с ограниченной ответственностью", "ООО");
+            order.ContractorName = order.ContractorName.Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО");
+
+            if (order.OwnerKPP == "0") {
+                order.OwnerKPP = string.Empty;
+            }
+            if (order.ContractorKPP == "0") {
+                order.ContractorKPP = string.Empty;
+            }
 
             return order;                                 
         }

@@ -51,9 +51,9 @@
             this.sourceFilesLabel.AutoSize = true;
             this.sourceFilesLabel.Location = new System.Drawing.Point(9, 44);
             this.sourceFilesLabel.Name = "sourceFilesLabel";
-            this.sourceFilesLabel.Size = new System.Drawing.Size(95, 13);
+            this.sourceFilesLabel.Size = new System.Drawing.Size(87, 13);
             this.sourceFilesLabel.TabIndex = 3;
-            this.sourceFilesLabel.Text = "Исходный файлы";
+            this.sourceFilesLabel.Text = "Исходный файл";
             // 
             // destFilesLabel
             // 
@@ -66,7 +66,7 @@
             // 
             // openSourceFileButton
             // 
-            this.openSourceFileButton.Location = new System.Drawing.Point(304, 60);
+            this.openSourceFileButton.Location = new System.Drawing.Point(325, 60);
             this.openSourceFileButton.Name = "openSourceFileButton";
             this.openSourceFileButton.Size = new System.Drawing.Size(76, 20);
             this.openSourceFileButton.TabIndex = 5;
@@ -77,7 +77,7 @@
             // 
             // openDestFileButton
             // 
-            this.openDestFileButton.Location = new System.Drawing.Point(304, 159);
+            this.openDestFileButton.Location = new System.Drawing.Point(325, 159);
             this.openDestFileButton.Name = "openDestFileButton";
             this.openDestFileButton.Size = new System.Drawing.Size(76, 20);
             this.openDestFileButton.TabIndex = 6;
@@ -99,7 +99,7 @@
             // 
             // exportAndOpenButton
             // 
-            this.exportAndOpenButton.Location = new System.Drawing.Point(232, 301);
+            this.exportAndOpenButton.Location = new System.Drawing.Point(253, 301);
             this.exportAndOpenButton.Name = "exportAndOpenButton";
             this.exportAndOpenButton.Size = new System.Drawing.Size(148, 27);
             this.exportAndOpenButton.TabIndex = 10;
@@ -116,7 +116,7 @@
             this.sourceFileInfoBox.Location = new System.Drawing.Point(12, 98);
             this.sourceFileInfoBox.Multiline = true;
             this.sourceFileInfoBox.Name = "sourceFileInfoBox";
-            this.sourceFileInfoBox.Size = new System.Drawing.Size(368, 36);
+            this.sourceFileInfoBox.Size = new System.Drawing.Size(389, 36);
             this.sourceFileInfoBox.TabIndex = 11;
             this.sourceFileInfoBox.Text = "Файл не выбран.";
             // 
@@ -146,7 +146,7 @@
             this.destFileInfoBox.Location = new System.Drawing.Point(12, 198);
             this.destFileInfoBox.Multiline = true;
             this.destFileInfoBox.Name = "destFileInfoBox";
-            this.destFileInfoBox.Size = new System.Drawing.Size(368, 36);
+            this.destFileInfoBox.Size = new System.Drawing.Size(389, 36);
             this.destFileInfoBox.TabIndex = 13;
             this.destFileInfoBox.Text = "Файл не выбран.";
             // 
@@ -157,7 +157,7 @@
             this.оПрограммеToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(396, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(414, 24);
             this.menuStrip1.TabIndex = 15;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -172,7 +172,7 @@
             // новыйОтчетToolStripMenuItem
             // 
             this.новыйОтчетToolStripMenuItem.Name = "новыйОтчетToolStripMenuItem";
-            this.новыйОтчетToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.новыйОтчетToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
             this.новыйОтчетToolStripMenuItem.Text = "Новый отчет";
             this.новыйОтчетToolStripMenuItem.Click += new System.EventHandler(this.новыйОтчетToolStripMenuItem_Click_1);
             // 
@@ -196,7 +196,7 @@
             this.sourceFileNameBox.Enabled = false;
             this.sourceFileNameBox.Location = new System.Drawing.Point(12, 60);
             this.sourceFileNameBox.Name = "sourceFileNameBox";
-            this.sourceFileNameBox.Size = new System.Drawing.Size(286, 20);
+            this.sourceFileNameBox.Size = new System.Drawing.Size(307, 20);
             this.sourceFileNameBox.TabIndex = 16;
             // 
             // destFileNameBox
@@ -204,7 +204,7 @@
             this.destFileNameBox.Enabled = false;
             this.destFileNameBox.Location = new System.Drawing.Point(12, 159);
             this.destFileNameBox.Name = "destFileNameBox";
-            this.destFileNameBox.Size = new System.Drawing.Size(286, 20);
+            this.destFileNameBox.Size = new System.Drawing.Size(307, 20);
             this.destFileNameBox.TabIndex = 17;
             // 
             // selectedShieldBox
@@ -213,7 +213,7 @@
             this.selectedShieldBox.FormattingEnabled = true;
             this.selectedShieldBox.Location = new System.Drawing.Point(12, 264);
             this.selectedShieldBox.Name = "selectedShieldBox";
-            this.selectedShieldBox.Size = new System.Drawing.Size(368, 21);
+            this.selectedShieldBox.Size = new System.Drawing.Size(389, 21);
             this.selectedShieldBox.TabIndex = 18;
             // 
             // label3
@@ -221,14 +221,14 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(9, 248);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(94, 13);
+            this.label3.Size = new System.Drawing.Size(392, 13);
             this.label3.TabIndex = 19;
-            this.label3.Text = "Лист назначения";
+            this.label3.Text = "Лист назначения (выберите из списка или введите название нового листа)";
             // 
             // exitButton
             // 
             this.exitButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
-            this.exitButton.Location = new System.Drawing.Point(233, 362);
+            this.exitButton.Location = new System.Drawing.Point(254, 362);
             this.exitButton.Name = "exitButton";
             this.exitButton.Size = new System.Drawing.Size(147, 39);
             this.exitButton.TabIndex = 20;
@@ -241,7 +241,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.exitButton;
-            this.ClientSize = new System.Drawing.Size(396, 413);
+            this.ClientSize = new System.Drawing.Size(414, 413);
             this.Controls.Add(this.exitButton);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.selectedShieldBox);

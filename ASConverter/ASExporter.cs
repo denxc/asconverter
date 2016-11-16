@@ -18,11 +18,12 @@ namespace ASConverter {
         private const string DEFAULT_REPORT = "Консолидированный отчет";
         private const string START_SHIELD_NAME = "Empty";
 
-        private static string[] defaultColumns = { "Клиент", "Книга продаж", "Дата", "Приход", "Расход", "Контраген",
+        private static string[] defaultColumns = { "Клиент", "Книга продаж", "Дата", "Приход", "Расход", "Контрагент",
                                                 "ИНН", "Ставка НДС", "Сумма НДС", "Назначение платежа", "П/п", "КПП",
                                                 "Р/счет контрагента", "Банк контрагента" };
         
         private const int DEFAULT_ROW_HEIGHT = (int)(0.5 * rowHeigthMultiplicator);
+        private const string DOUBLE_FORMAT = "#,##0.00";
 
         public static void Generate(string aXlsFile) {
             var wb = HSSFWorkbook.Create(InternalWorkbook.CreateWorkbook());
@@ -68,25 +69,31 @@ namespace ASConverter {
                 wb = new HSSFWorkbook(fs);
                 fs.Close();                       
             }
-
-            var sheet = wb.CreateSheet(shieldName);
-            PrepareShieldTop(sheet, aOrder, aStartAmount);
-
+            
             var defaultReportShield = wb.GetSheet(DEFAULT_REPORT);
             if (defaultReportShield == null) {
                 defaultReportShield = wb.CreateSheet(DEFAULT_REPORT);
+                wb.SetSheetOrder(DEFAULT_REPORT, 0);
                 PrepareShieldTop(defaultReportShield, aOrder, aStartAmount);
             } else {
                 var row = defaultReportShield.GetRow(0);
                 var cell = row.GetCell(3);
                 var cellValue = cell.NumericCellValue;
-                cell.SetCellValue(cellValue + aStartAmount);
+                cell.SetCellValue(cellValue + aStartAmount);                
             }
 
+            var defaultReportIndex = wb.GetSheetIndex(defaultReportShield);
+
+            var sheet = wb.CreateSheet(shieldName);
+            wb.SetSheetOrder(shieldName, defaultReportIndex);
+            PrepareShieldTop(sheet, aOrder, aStartAmount);
+
             var emptyShield = wb.GetSheet(START_SHIELD_NAME);
-            if (emptyShield != null) {                
+            if (emptyShield != null) {
                 wb.SetSheetHidden(wb.GetSheetIndex(emptyShield), SheetState.VeryHidden);
             }
+
+            wb.SetActiveSheet(0);
 
             using (var fs = new FileStream(aXlsFile, FileMode.Create, FileAccess.Write)) {
                 wb.Write(fs);
@@ -104,21 +111,45 @@ namespace ASConverter {
             defaultFont.FontName = "Calibri";
             defaultFont.FontHeightInPoints = 11;            
 
-            var doubleCellStyle = sheet.Workbook.CreateCellStyle();
-            doubleCellStyle.DataFormat = sheet.Workbook.CreateDataFormat().GetFormat("#0.00");
-            doubleCellStyle.BorderBottom = BorderStyle.Medium;
-            doubleCellStyle.BorderTop = BorderStyle.Medium;
-            doubleCellStyle.BorderLeft = BorderStyle.Medium;
-            doubleCellStyle.BorderRight = BorderStyle.Medium;
-            doubleCellStyle.SetFont(boldFont);
+            var doubleCellBoldStyle = sheet.Workbook.CreateCellStyle();
+            doubleCellBoldStyle.DataFormat = sheet.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
+            doubleCellBoldStyle.BorderBottom = BorderStyle.Medium;
+            doubleCellBoldStyle.BorderTop = BorderStyle.Medium;
+            doubleCellBoldStyle.BorderLeft = BorderStyle.Medium;
+            doubleCellBoldStyle.BorderRight = BorderStyle.Medium;
+            doubleCellBoldStyle.SetFont(boldFont);
 
-            var stringCellStyle = sheet.Workbook.CreateCellStyle();            
-            stringCellStyle.BorderBottom = BorderStyle.Medium;
-            stringCellStyle.BorderTop = BorderStyle.Medium;
-            stringCellStyle.BorderLeft = BorderStyle.Medium;
-            stringCellStyle.BorderRight = BorderStyle.Medium;
-            stringCellStyle.Alignment = HorizontalAlignment.Center;
-            stringCellStyle.SetFont(boldFont);
+            var doubleCellDefaultStyle = sheet.Workbook.CreateCellStyle();
+            doubleCellDefaultStyle.DataFormat = sheet.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
+            doubleCellDefaultStyle.BorderBottom = BorderStyle.Medium;
+            doubleCellDefaultStyle.BorderTop = BorderStyle.Medium;
+            doubleCellDefaultStyle.BorderLeft = BorderStyle.Medium;
+            doubleCellDefaultStyle.BorderRight = BorderStyle.Medium;
+            doubleCellDefaultStyle.SetFont(defaultFont);
+
+            var stringCellBoldStyle = sheet.Workbook.CreateCellStyle();            
+            stringCellBoldStyle.BorderBottom = BorderStyle.Medium;
+            stringCellBoldStyle.BorderTop = BorderStyle.Medium;
+            stringCellBoldStyle.BorderLeft = BorderStyle.Medium;
+            stringCellBoldStyle.BorderRight = BorderStyle.Medium;
+            stringCellBoldStyle.Alignment = HorizontalAlignment.Center;
+            stringCellBoldStyle.SetFont(boldFont);
+
+            var stringCellDefaultStyle = sheet.Workbook.CreateCellStyle();
+            stringCellDefaultStyle.BorderBottom = BorderStyle.Medium;
+            stringCellDefaultStyle.BorderTop = BorderStyle.Medium;
+            stringCellDefaultStyle.BorderLeft = BorderStyle.Medium;
+            stringCellDefaultStyle.BorderRight = BorderStyle.Medium;
+            stringCellDefaultStyle.Alignment = HorizontalAlignment.Center;
+            stringCellDefaultStyle.SetFont(defaultFont);
+
+            var stringCellDefaultLeftStyle = sheet.Workbook.CreateCellStyle();
+            stringCellDefaultLeftStyle.BorderBottom = BorderStyle.Medium;
+            stringCellDefaultLeftStyle.BorderTop = BorderStyle.Medium;
+            stringCellDefaultLeftStyle.BorderLeft = BorderStyle.Medium;
+            stringCellDefaultLeftStyle.BorderRight = BorderStyle.Medium;
+            stringCellDefaultLeftStyle.Alignment = HorizontalAlignment.Left;
+            stringCellDefaultLeftStyle.SetFont(defaultFont);
 
             var unicCellStyle = sheet.Workbook.CreateCellStyle();
             unicCellStyle.BorderBottom = BorderStyle.Medium;
@@ -127,68 +158,58 @@ namespace ASConverter {
             var row = sheet.CreateRow(0);
             row.Height = DEFAULT_ROW_HEIGHT;
             var cell = row.CreateCell(0, CellType.String);
-            cell.CellStyle = unicCellStyle;
-            cell.SetCellValue("Остаток на начало периода");            
-            cell = row.CreateCell(1, CellType.String);            
-            cell.CellStyle = unicCellStyle;
-            cell.SetCellValue(string.Empty);
-            cell = row.CreateCell(2, CellType.String);
-            cell.CellStyle = unicCellStyle;
-            cell.SetCellValue(string.Empty);
+            cell.CellStyle = unicCellStyle;            
+            cell.SetCellValue("Остаток на начало периода");                        
+            sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 2));
 
             cell = row.CreateCell(3, CellType.Numeric);            
-            cell.CellStyle = doubleCellStyle;            
+            cell.CellStyle = doubleCellDefaultStyle;            
             cell.SetCellValue(aStartAmount);
 
             row = sheet.CreateRow(1);
             row.Height = DEFAULT_ROW_HEIGHT;
             cell = row.CreateCell(0, CellType.String);
             cell.CellStyle = unicCellStyle;            
-            cell.SetCellValue("Обороты за период");
-            cell = row.CreateCell(1, CellType.String);
-            cell.CellStyle = unicCellStyle;
-            cell.SetCellValue(string.Empty);
-            cell = row.CreateCell(2, CellType.String);
-            cell.CellStyle = unicCellStyle;
-            cell.SetCellValue(string.Empty);
+            cell.SetCellValue("Обороты за период");            
+            sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(1, 1, 0, 2));
             cell = row.CreateCell(3, CellType.Numeric);
-            cell.CellStyle = doubleCellStyle;
+            cell.CellStyle = doubleCellDefaultStyle;
             cell.SetCellValue(0.0);
             cell = row.CreateCell(4, CellType.Numeric);
-            cell.CellStyle = doubleCellStyle;
+            cell.CellStyle = doubleCellDefaultStyle;
             cell.SetCellValue(0.0);
             cell = row.CreateCell(5, CellType.String);
-            cell.CellStyle = stringCellStyle;            
+            cell.CellStyle = stringCellBoldStyle;            
             cell.SetCellValue(aOrder.OwnerName);
             cell = row.CreateCell(6, CellType.String);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellDefaultStyle;            
             cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerInn) ? string.Empty : aOrder.OwnerInn);
             cell = row.CreateCell(11, CellType.String);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellDefaultLeftStyle;            
             cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerKPP) ? string.Empty : aOrder.OwnerKPP);
             cell = row.CreateCell(12, CellType.String);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellDefaultLeftStyle;            
             cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerAccount) ? string.Empty : aOrder.OwnerAccount);            
             cell = row.CreateCell(13, CellType.String);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellDefaultLeftStyle;            
             cell.SetCellValue(aOrder.OwnerBank);
 
             row = sheet.CreateRow(2);
             row.Height = DEFAULT_ROW_HEIGHT;
-            cell = row.CreateCell(0, CellType.String);
+            cell = row.CreateCell(0, CellType.String);            
             cell.SetCellValue("Остаток на конец периода");
+            sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(2, 2, 0, 2));
             cell = row.CreateCell(3, CellType.Numeric);
-            cell.CellStyle = doubleCellStyle;
+            cell.CellStyle = doubleCellBoldStyle;
             cell.SetCellFormula("D1+D2-E2");
 
             row = sheet.CreateRow(3);
             row.Height = DEFAULT_ROW_HEIGHT;
             for (var i = 0; i < defaultColumns.Length; ++i) {
                 cell = row.CreateCell(i);
-                cell.CellStyle = stringCellStyle;
+                cell.CellStyle = stringCellBoldStyle;
                 cell.SetCellValue(defaultColumns[i]);
             }
-
 
             sheet.SetColumnWidth(0, (int)(2.63 * rowWidthMultiplicator));
             sheet.SetColumnWidth(1, (int)(2.63 * rowWidthMultiplicator));
@@ -203,7 +224,7 @@ namespace ASConverter {
             sheet.SetColumnWidth(10, (int)(1.74 * rowWidthMultiplicator));
             sheet.SetColumnWidth(11, (int)(2.17 * rowWidthMultiplicator));
             sheet.SetColumnWidth(12, (int)(4.65 * rowWidthMultiplicator));
-            sheet.SetColumnWidth(13, (int)(8.75 * rowWidthMultiplicator));
+            sheet.SetColumnWidth(13, (int)(18.0 * rowWidthMultiplicator));
 
             sheet.CreateFreezePane(0, 4);
         }
@@ -253,7 +274,7 @@ namespace ASConverter {
             defaultFont.FontHeightInPoints = 11;
 
             var doubleCellStyle = shield.Workbook.CreateCellStyle();
-            doubleCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat("#0.00");
+            doubleCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
             doubleCellStyle.BorderRight = BorderStyle.Medium;
             doubleCellStyle.BorderLeft = BorderStyle.Medium;
             doubleCellStyle.SetFont(defaultFont);
@@ -291,7 +312,7 @@ namespace ASConverter {
             defaultFont.FontHeightInPoints = 11;
 
             var doubleCellStyle = shield.Workbook.CreateCellStyle();
-            doubleCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat("#0.00");
+            doubleCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
             doubleCellStyle.BorderRight = BorderStyle.Medium;
             doubleCellStyle.SetFont(defaultFont);
 
@@ -314,17 +335,17 @@ namespace ASConverter {
 
             // клиент.
             var cell = row.CreateCell(0);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellStyle;            
             cell.SetCellValue(string.Empty);
 
             // книга продаж.
             cell = row.CreateCell(1);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellStyle;            
             cell.SetCellValue(string.Empty);
 
             // дата.
             cell = row.CreateCell(2);
-            cell.CellStyle = dataCellStyle;
+            cell.CellStyle = dataCellStyle;            
             cell.SetCellValue(order.date);
 
             // Приход.
@@ -347,12 +368,12 @@ namespace ASConverter {
 
             // контрагент.
             cell = row.CreateCell(5);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellStyle;            
             cell.SetCellValue(order.ContractorName);
 
             // инн
             cell = row.CreateCell(6);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellStyle;            
             cell.SetCellValue(string.IsNullOrEmpty(order.ContractorINN) ? string.Empty : order.ContractorINN);
 
             // ставка ндс.
@@ -377,7 +398,7 @@ namespace ASConverter {
 
             // назначение платежа.
             cell = row.CreateCell(9);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellStyle;            
             cell.SetCellValue(order.PayDestination);
 
             // П.п
@@ -388,16 +409,21 @@ namespace ASConverter {
             //КПП
             cell = row.CreateCell(11);
             cell.CellStyle = stringCellStyle;
-            cell.SetCellValue(string.IsNullOrEmpty(order.ContractorKPP) ? string.Empty : order.ContractorKPP);
+            if (string.IsNullOrEmpty(order.ContractorKPP)) {
+                cell.SetCellType(CellType.Blank);
+            } else {
+                cell.SetCellValue(order.ContractorKPP);
+            }            
 
             // р счет контрагента.
             cell = row.CreateCell(12);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = stringCellStyle;            
             cell.SetCellValue(order.ContractorAccount);
 
             // банк контрагента.
             cell = row.CreateCell(13);
             cell.CellStyle = stringCellStyle;
+            cell.SetCellType(CellType.String);
             cell.SetCellValue(order.ContractorBank);
 
             return true;
@@ -459,199 +485,6 @@ namespace ASConverter {
                     }
                 }
             }
-        }
-
-        //private static string DEFAULT_REPORT = "Консолидированный отчет";
-
-        //private ExcelWorksheet lastList = null;
-
-        //public int Export(string aSourceFile, string aDestFile, out string aMessage) {
-        //    var startAmount = 0.0;
-        //    var endAmount = 0.0;
-        //    var orders = new OrdersProvider().LoadOrders(aSourceFile, out startAmount, out endAmount);
-
-        //    var xlsFile = new FileInfo(aDestFile);
-        //    var pck = new ExcelPackage(xlsFile);
-
-        //    ClearAllColors(pck);
-
-        //    var spisano = 0.0;
-        //    var postupilo = 0.0;
-
-        //    var count = 0;
-        //    for (var i = orders.Count - 1; i >= 0; --i) {
-        //        var order = orders[i];
-        //        if (AddOrderToFile(order, pck, startAmount)) {
-        //            count++;
-        //            spisano += order.amountSpisano;
-        //            postupilo += order.amountPostupilo;
-        //        } else {
-        //            order.WasAdded = true;
-        //        }
-        //    }
-
-        //    AddOrdersToDefaultList(orders, pck);
-
-        //    aMessage = string.Empty;
-        //    if (lastList != null) {
-        //        CheckAmountResult(endAmount, out aMessage);
-        //    }
-
-        //    pck.Save();
-        //    return count;
-        //}
-
-        //private void CheckAmountResult(double endAmount, out string aMessage) {
-        //    var lastRowIndex = lastList.Dimension.End.Row;
-        //    var startAmount = Convert.ToDouble(lastList.Cells[lastRowIndex, 1].Value);
-        //    lastList.Cells[lastRowIndex, 3].Calculate();
-        //    lastList.Cells[lastRowIndex, 4].Calculate();
-        //    var postupilo = Convert.ToDouble(lastList.Cells[lastRowIndex, 3].Value);
-        //    var spisano = Convert.ToDouble(lastList.Cells[lastRowIndex, 4].Value);
-
-        //    aMessage = string.Empty;
-        //    var expected = startAmount + postupilo - spisano;            
-        //    if (Math.Abs(expected - endAmount) > 0.0001) {
-        //        aMessage = string.Format("Возможно, за некоторый период выписки не импортированы.\nОжидался остаток: {0:0.##}, остаток в отчете: {1:0.##}", endAmount, expected);
-        //    }
-        //}
-
-        //private void AddOrdersToDefaultList(List<OrderEntity> orders, ExcelPackage pck) {
-        //    var lists = pck.Workbook.Worksheets;
-        //    ExcelWorksheet list = null;
-        //    for (var i = 1; i <= lists.Count; ++i) {
-        //        if (lists[i].Name.Equals(DEFAULT_REPORT)) {
-        //            list = lists[i];
-        //            break;
-        //        }
-        //    }
-
-        //    if (list == null) {
-        //        list = lists.Add(DEFAULT_REPORT);
-        //    }
-
-        //    for (var i = orders.Count - 1; i >= 0; --i) { 
-        //        AddOrderToList(list, orders[i], false, 0.0);
-        //    }            
-        //}
-
-        //private void ClearAllColors(ExcelPackage pck) {
-        //    var lists = pck.Workbook.Worksheets;
-        //    for (var i = 1; i <= lists.Count; ++i) {
-        //        var list = lists[i];
-        //        if (list.Dimension != null) {
-        //            for (var j = 1; j <= list.Dimension.Rows; ++j) {
-        //                list.Row(j).Style.Font.Color.SetColor(Color.Black);
-        //            }
-        //        }                
-        //    }
-        //}
-
-        //private bool AddOrderToFile(OrderEntity order, ExcelPackage pck, double aStartAmount) {
-        //    var lists = pck.Workbook.Worksheets;
-        //    for (var i = 1; i <= lists.Count; ++i) {                
-        //        if (order.OwnerBank.ToLower().StartsWith(lists[i].Name.ToLower()) ||
-        //            lists[i].Name.ToLower().StartsWith(order.OwnerBank.ToLower())) {
-        //            lastList = lists[i];
-        //            return AddOrderToList(lists[i], order, true, 0.0);
-        //        }
-        //    }
-
-        //    lastList = lists.Add(order.OwnerBank);            
-        //    return AddOrderToList(lastList, order, true, aStartAmount);
-        //}
-
-        //private bool AddOrderToList(ExcelWorksheet exelList, OrderEntity order, bool isCheckDublicats, double aStartAmount) {
-        //    if (!CheckPreparation(exelList)) {
-        //        PrepareExelList(exelList, aStartAmount);
-        //    }
-
-        //    if (isCheckDublicats && CheckExisting(exelList, order)) {
-        //        return false;
-        //    }
-
-        //    if (order.WasAdded) {
-        //        return false;
-        //    }
-
-        //    var rowIndex = FindLastRowIndex(exelList);
-        //    exelList.InsertRow(rowIndex, 1);
-        //    exelList.Row(rowIndex).Style.Font.Color.SetColor(Color.Green);
-        //    var colIndex = 1;
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.Number;
-        //    exelList.Cells[rowIndex, colIndex].Style.Numberformat.Format = DateTimeFormatInfo.CurrentInfo.ShortDatePattern;
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.date.Date;            
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.amountPostupilo > 0 ? order.amountPostupilo : 0;            
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.amountSpisano > 0 ? order.amountSpisano :  0;
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.ContractorName;
-        //    if (order.Nds < 0) {
-        //        exelList.Cells[rowIndex, colIndex++].Value = "Уточнить";
-        //        exelList.Cells[rowIndex, colIndex++].Value = "";
-        //    } else {
-        //        exelList.Cells[rowIndex, colIndex++].Value = order.Nds;
-        //        exelList.Cells[rowIndex, colIndex++].Value = order.NdsSum;
-        //    }             
-        //    exelList.Cells[rowIndex, colIndex++].Value = string.IsNullOrEmpty(order.ContractorINN) ? string.Empty : order.ContractorINN;
-        //    exelList.Cells[rowIndex, colIndex++].Value = string.IsNullOrEmpty(order.ContractorKPP) ? string.Empty : order.ContractorKPP;
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.ContractorAccount;
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.ContractorBank;
-        //    exelList.Cells[rowIndex, colIndex++].Value = order.PayDestination;
-        //    for (var i = 0; i < exelColumns.Length; ++i) {
-        //        exelList.Column(i + 1).AutoFit();
-        //    }
-
-        //    exelList.Cells[rowIndex + 1, 3].Formula = string.Format("SUM(C2:C{0})", rowIndex);
-        //    exelList.Cells[rowIndex + 1, 4].Formula = string.Format("SUM(D2:D{0})", rowIndex);
-
-        //    return true;
-        //}
-
-        //private bool CheckExisting(ExcelWorksheet exelList, OrderEntity order) {
-        //    for (var i = 1; i <= exelList.Dimension.Rows; ++i) {
-        //        var torder = new OrderEntity();                
-        //        int.TryParse(exelList.Cells[i, 1].Value + "", out torder.Number);                
-        //        torder.PayDestination = exelList.Cells[i, 12].Value + "";                
-
-        //        if (torder.Number == order.Number &&                    
-        //            torder.PayDestination == order.PayDestination) {
-        //            return true;
-        //        }
-        //    }
-
-        //    return false;
-        //}
-
-        //private int FindLastRowIndex(ExcelWorksheet exelList) {
-        //    return exelList.Dimension.End.Row;
-        //}
-
-        //private void PrepareExelList(ExcelWorksheet exelList, double aStartAmount) {
-        //    for (var i = 0; i < exelColumns.Length; ++i) {                
-        //        exelList.Cells[1, i + 1].Value = exelColumns[i];
-        //        var column = exelList.Column(i + 1);
-        //        column.AutoFit();                
-        //    }
-        //    exelList.Cells[2, 1].Value = aStartAmount;
-        //    exelList.Cells[2, 1].Style.Font.Color.SetColor(Color.White);
-        //    exelList.Cells[2, 4].Value = "Итого";
-        //    exelList.Cells[2, 3].Value = "Итого";            
-        //}
-
-        //private bool CheckPreparation(ExcelWorksheet exelList) {
-        //    foreach (var row in exelColumns) {
-        //        var isFind = false;
-        //        for (var i = 0; i < exelColumns.Length + 5; ++i) {
-        //            if (row.Equals(exelList.Cells[1, i + 1].Value)) {
-        //                isFind = true;
-        //                break;
-        //            }
-        //        }
-        //        if (!isFind) {
-        //            return false;
-        //        }
-        //    }
-
-        //    return true;
-        //}        
+        }        
     }
 }
