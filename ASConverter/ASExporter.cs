@@ -159,7 +159,11 @@ namespace ASConverter {
             row.Height = DEFAULT_ROW_HEIGHT;
             var cell = row.CreateCell(0, CellType.String);
             cell.CellStyle = unicCellStyle;            
-            cell.SetCellValue("Остаток на начало периода");                        
+            cell.SetCellValue("Остаток на начало периода");
+            cell = row.CreateCell(1, CellType.String);
+            cell.CellStyle = unicCellStyle;
+            cell = row.CreateCell(2, CellType.String);
+            cell.CellStyle = unicCellStyle;
             sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 2));
 
             cell = row.CreateCell(3, CellType.Numeric);            
@@ -170,7 +174,11 @@ namespace ASConverter {
             row.Height = DEFAULT_ROW_HEIGHT;
             cell = row.CreateCell(0, CellType.String);
             cell.CellStyle = unicCellStyle;            
-            cell.SetCellValue("Обороты за период");            
+            cell.SetCellValue("Обороты за период");
+            cell = row.CreateCell(1, CellType.String);
+            cell.CellStyle = unicCellStyle;
+            cell = row.CreateCell(2, CellType.String);
+            cell.CellStyle = unicCellStyle;
             sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(1, 1, 0, 2));
             cell = row.CreateCell(3, CellType.Numeric);
             cell.CellStyle = doubleCellDefaultStyle;
@@ -266,10 +274,10 @@ namespace ASConverter {
             return countAdded;
         }
 
-        private static void ColorEndAmound(ISheet shield, bool isGreen) {
+        private static void ColorEndAmound(ISheet shield, bool isRed) {
             var defaultFont = shield.Workbook.CreateFont();
             defaultFont.FontName = "Calibri";
-            defaultFont.Color = isGreen ? HSSFColor.Red.Index : HSSFColor.Black.Index;
+            defaultFont.Color = isRed ? HSSFColor.Red.Index : HSSFColor.Black.Index;
             defaultFont.IsBold = true;
             defaultFont.FontHeightInPoints = 11;
 
@@ -345,8 +353,8 @@ namespace ASConverter {
 
             // дата.
             cell = row.CreateCell(2);
-            cell.CellStyle = dataCellStyle;            
-            cell.SetCellValue(order.date);
+            cell.CellStyle = dataCellStyle;
+            cell.SetCellValue(order.date.Date);            
 
             // Приход.
             cell = row.CreateCell(3);
