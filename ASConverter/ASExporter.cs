@@ -93,7 +93,7 @@ namespace ASConverter {
                 wb.SetSheetHidden(wb.GetSheetIndex(emptyShield), SheetState.VeryHidden);
             }
 
-            wb.SetActiveSheet(0);
+            wb.SetActiveSheet(defaultReportIndex);
 
             using (var fs = new FileStream(aXlsFile, FileMode.Create, FileAccess.Write)) {
                 wb.Write(fs);
@@ -157,59 +157,59 @@ namespace ASConverter {
 
             var row = sheet.CreateRow(0);
             row.Height = DEFAULT_ROW_HEIGHT;
-            var cell = row.CreateCell(0, CellType.String);
-            cell.CellStyle = unicCellStyle;            
+            var cell = row.CreateCell(0, CellType.String);                        
             cell.SetCellValue("Остаток на начало периода");
+            cell.CellStyle = unicCellStyle;
             cell = row.CreateCell(1, CellType.String);
             cell.CellStyle = unicCellStyle;
             cell = row.CreateCell(2, CellType.String);
             cell.CellStyle = unicCellStyle;
             sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 2));
 
-            cell = row.CreateCell(3, CellType.Numeric);            
-            cell.CellStyle = doubleCellDefaultStyle;            
+            cell = row.CreateCell(3, CellType.Numeric);                        
             cell.SetCellValue(aStartAmount);
+            cell.CellStyle = doubleCellDefaultStyle;
 
             row = sheet.CreateRow(1);
             row.Height = DEFAULT_ROW_HEIGHT;
-            cell = row.CreateCell(0, CellType.String);
-            cell.CellStyle = unicCellStyle;            
+            cell = row.CreateCell(0, CellType.String);            
             cell.SetCellValue("Обороты за период");
+            cell.CellStyle = unicCellStyle;
             cell = row.CreateCell(1, CellType.String);
             cell.CellStyle = unicCellStyle;
             cell = row.CreateCell(2, CellType.String);
             cell.CellStyle = unicCellStyle;
             sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(1, 1, 0, 2));
-            cell = row.CreateCell(3, CellType.Numeric);
-            cell.CellStyle = doubleCellDefaultStyle;
+            cell = row.CreateCell(3, CellType.Numeric);            
             cell.SetCellValue(0.0);
-            cell = row.CreateCell(4, CellType.Numeric);
             cell.CellStyle = doubleCellDefaultStyle;
+            cell = row.CreateCell(4, CellType.Numeric);            
             cell.SetCellValue(0.0);
-            cell = row.CreateCell(5, CellType.String);
-            cell.CellStyle = stringCellBoldStyle;            
+            cell.CellStyle = doubleCellDefaultStyle;
+            cell = row.CreateCell(5, CellType.String);                     
             cell.SetCellValue(aOrder.OwnerName);
+            cell.CellStyle = stringCellBoldStyle;
             cell = row.CreateCell(6, CellType.String);
-            cell.CellStyle = stringCellDefaultStyle;            
             cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerInn) ? string.Empty : aOrder.OwnerInn);
-            cell = row.CreateCell(11, CellType.String);
-            cell.CellStyle = stringCellDefaultLeftStyle;            
+            cell.CellStyle = stringCellDefaultStyle;
+            cell = row.CreateCell(11, CellType.String);                        
             cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerKPP) ? string.Empty : aOrder.OwnerKPP);
-            cell = row.CreateCell(12, CellType.String);
-            cell.CellStyle = stringCellDefaultLeftStyle;            
-            cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerAccount) ? string.Empty : aOrder.OwnerAccount);            
-            cell = row.CreateCell(13, CellType.String);
-            cell.CellStyle = stringCellDefaultLeftStyle;            
+            cell.CellStyle = stringCellDefaultLeftStyle;
+            cell = row.CreateCell(12, CellType.String);                        
+            cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerAccount) ? string.Empty : aOrder.OwnerAccount);
+            cell.CellStyle = stringCellDefaultLeftStyle;
+            cell = row.CreateCell(13, CellType.String);                        
             cell.SetCellValue(aOrder.OwnerBank);
+            cell.CellStyle = stringCellDefaultLeftStyle;
 
             row = sheet.CreateRow(2);
             row.Height = DEFAULT_ROW_HEIGHT;
             cell = row.CreateCell(0, CellType.String);            
             cell.SetCellValue("Остаток на конец периода");
             sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(2, 2, 0, 2));
-            cell = row.CreateCell(3, CellType.Numeric);
-            cell.CellStyle = doubleCellBoldStyle;
+            cell = row.CreateCell(3, CellType.Numeric);            
             cell.SetCellFormula("D1+D2-E2");
+            cell.CellStyle = doubleCellBoldStyle;
 
             row = sheet.CreateRow(3);
             row.Height = DEFAULT_ROW_HEIGHT;
@@ -334,7 +334,7 @@ namespace ASConverter {
             ndsCellStyle.SetFont(defaultFont);
 
             var dataCellStyle = shield.Workbook.CreateCellStyle();
-            dataCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat("dd.mm.yy");
+            dataCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat("DD.MM.YY;@");            
             dataCellStyle.BorderRight = BorderStyle.Medium;
             dataCellStyle.SetFont(defaultFont);
 
@@ -342,51 +342,50 @@ namespace ASConverter {
             row.Height = DEFAULT_ROW_HEIGHT;
 
             // клиент.
-            var cell = row.CreateCell(0);
-            cell.CellStyle = stringCellStyle;            
+            var cell = row.CreateCell(0);            
             cell.SetCellValue(string.Empty);
+            cell.CellStyle = stringCellStyle;
 
             // книга продаж.
-            cell = row.CreateCell(1);
-            cell.CellStyle = stringCellStyle;            
+            cell = row.CreateCell(1);            
             cell.SetCellValue(string.Empty);
+            cell.CellStyle = stringCellStyle;
 
             // дата.
             cell = row.CreateCell(2);
-            cell.CellStyle = dataCellStyle;
             cell.SetCellValue(order.date.Date);            
+            cell.CellStyle = dataCellStyle;            
 
             // Приход.
-            cell = row.CreateCell(3);
-            cell.CellStyle = doubleCellStyle;
+            cell = row.CreateCell(3);            
             if (order.amountPostupilo > 0) {
                 cell.SetCellValue(order.amountPostupilo);                
             } else {
-                cell.SetCellValue(string.Empty);
+                //cell.SetCellValue(string.Empty);
             }
+            cell.CellStyle = doubleCellStyle;
 
             // расход.
-            cell = row.CreateCell(4);
-            cell.CellStyle = doubleCellStyle;
+            cell = row.CreateCell(4);            
             if (order.amountSpisano > 0) {
                 cell.SetCellValue(order.amountSpisano);
             } else {
-                cell.SetCellValue(string.Empty);                
+                //cell.SetCellValue(string.Empty);                
             }
+            cell.CellStyle = doubleCellStyle;
 
             // контрагент.
-            cell = row.CreateCell(5);
-            cell.CellStyle = stringCellStyle;            
+            cell = row.CreateCell(5);                        
             cell.SetCellValue(order.ContractorName);
+            cell.CellStyle = stringCellStyle;
 
             // инн
-            cell = row.CreateCell(6);
-            cell.CellStyle = stringCellStyle;            
+            cell = row.CreateCell(6);                        
             cell.SetCellValue(string.IsNullOrEmpty(order.ContractorINN) ? string.Empty : order.ContractorINN);
+            cell.CellStyle = stringCellStyle;
 
             // ставка ндс.
-            cell = row.CreateCell(7);
-            cell.CellStyle = ndsCellStyle;
+            cell = row.CreateCell(7);            
             if (order.Nds == -1) {
                 cell.SetCellValue("Без НДС");
             } else if (order.Nds == -2) {
@@ -394,45 +393,45 @@ namespace ASConverter {
             } else {
                 cell.SetCellValue(order.Nds + "");
             }
+            cell.CellStyle = ndsCellStyle;
 
             // сумма ндс.            
-            cell = row.CreateCell(8);
-            cell.CellStyle = doubleCellStyle;
+            cell = row.CreateCell(8);            
             if (order.Nds < 0) {
-                cell.SetCellValue(string.Empty);
+                //cell.SetCellValue(string.Empty);
             } else {                
                 cell.SetCellValue(order.NdsSum);
             }
+            cell.CellStyle = doubleCellStyle;
 
             // назначение платежа.
-            cell = row.CreateCell(9);
-            cell.CellStyle = stringCellStyle;            
+            cell = row.CreateCell(9);            
             cell.SetCellValue(order.PayDestination);
+            cell.CellStyle = stringCellStyle;
 
             // П.п
             cell = row.CreateCell(10);
-            cell.CellStyle = stringCellStyle;
             cell.SetCellValue(order.Number);
+            cell.CellStyle = stringCellStyle;
 
             //КПП
-            cell = row.CreateCell(11);
-            cell.CellStyle = stringCellStyle;
+            cell = row.CreateCell(11);            
             if (string.IsNullOrEmpty(order.ContractorKPP)) {
-                cell.SetCellType(CellType.Blank);
+                //cell.SetCellType(CellType.Blank);
             } else {
                 cell.SetCellValue(order.ContractorKPP);
-            }            
+            }
+            cell.CellStyle = stringCellStyle;
 
             // р счет контрагента.
-            cell = row.CreateCell(12);
-            cell.CellStyle = stringCellStyle;            
+            cell = row.CreateCell(12);                        
             cell.SetCellValue(order.ContractorAccount);
+            cell.CellStyle = stringCellStyle;
 
             // банк контрагента.
-            cell = row.CreateCell(13);
-            cell.CellStyle = stringCellStyle;
-            cell.SetCellType(CellType.String);
+            cell = row.CreateCell(13, CellType.String);            
             cell.SetCellValue(order.ContractorBank);
+            cell.CellStyle = stringCellStyle;
 
             return true;
         }
