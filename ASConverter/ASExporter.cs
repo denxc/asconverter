@@ -104,7 +104,7 @@ namespace ASConverter {
         private static void PrepareShieldTop(ISheet sheet, OrderEntity aOrder, double aStartAmount) {
             var boldFont = sheet.Workbook.CreateFont();
             boldFont.FontName = "Calibri";
-            boldFont.FontHeightInPoints = 11;
+            boldFont.FontHeightInPoints = 11;            
             boldFont.IsBold = true;
 
             var defaultFont = sheet.Workbook.CreateFont();
@@ -278,7 +278,7 @@ namespace ASConverter {
             var defaultFont = shield.Workbook.CreateFont();
             defaultFont.FontName = "Calibri";
             defaultFont.Color = isRed ? HSSFColor.Red.Index : HSSFColor.Black.Index;
-            defaultFont.IsBold = true;
+            defaultFont.IsBold = true;            
             defaultFont.FontHeightInPoints = 11;
 
             var doubleCellStyle = shield.Workbook.CreateCellStyle();
@@ -473,12 +473,7 @@ namespace ASConverter {
             return newRow;
         }
 
-        private static void ClearAllColors(HSSFWorkbook wb) {
-            var defaultFont = wb.CreateFont();
-            defaultFont.FontName = "Calibri";
-            defaultFont.Color = HSSFColor.Black.Index;
-            defaultFont.FontHeightInPoints = 11;
-
+        private static void ClearAllColors(HSSFWorkbook wb) {            
             var shieldsCount = wb.NumberOfSheets;
             for (var i = 0; i < shieldsCount; ++i) {
                 var shield = wb.GetSheetAt(i);
@@ -486,8 +481,8 @@ namespace ASConverter {
                 for (var j = 4; j <= lastRowNumber; ++j) {
                     var row = shield.GetRow(j);
                     if (row.Cells != null) {
-                        foreach (var cell in row.Cells) {
-                            cell.CellStyle.SetFont(defaultFont);
+                        foreach (var cell in row.Cells) {                            
+                            cell.CellStyle.GetFont(wb).Color = HSSFColor.Black.Index;
                         }
                     }
                 }
