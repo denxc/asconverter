@@ -60,6 +60,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AccountSection.cs" />
+    <Compile Include="AccountSectionSorterByDate.cs" />
     <Compile Include="ASExporter.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>

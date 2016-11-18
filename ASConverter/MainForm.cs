@@ -216,14 +216,14 @@ namespace ASConverter {
             }            
         }
 
-        private OrderEntity[] TryLoadOrders(string aTextFile, out double aStartAmount, out double aEndAmount) {
+        private OrderEntity[] TryLoadOrders(string aTextFile, out AccountSection aStartAmount, out AccountSection aEndAmount) {
             try {
                 var orders = OrdersProvider.LoadOrders(aTextFile, out aStartAmount, out aEndAmount);
                 return orders.ToArray();
             } catch (Exception ex) {
                 MessageBox.Show("При загрузке операций из файла произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                aStartAmount = 0;
-                aEndAmount = 0;
+                aStartAmount = null;
+                aEndAmount = null;
                 return null;
             }
         }
@@ -243,6 +243,18 @@ namespace ASConverter {
             }            
 
             return false;
+        }
+
+        private void destFileInfoBox_TextChanged(object sender, EventArgs e) {
+            openButton.Enabled = File.Exists(destFileInfoBox.Text);
+        }
+
+        private void openButton_Click(object sender, EventArgs e) {
+            try {
+                System.Diagnostics.Process.Start(destFilePath);
+            } catch (Exception ex) {
+                MessageBox.Show("При открытии файла произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
     }
 }

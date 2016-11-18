@@ -21,9 +21,11 @@ namespace ASConverter {
         private static string[] defaultColumns = { "Клиент", "Книга продаж", "Дата", "Приход", "Расход", "Контрагент",
                                                 "ИНН", "Ставка НДС", "Сумма НДС", "Назначение платежа", "П/п", "КПП",
                                                 "Р/счет контрагента", "Банк контрагента" };
-        
-        private const int DEFAULT_ROW_HEIGHT = (int)(0.5 * rowHeigthMultiplicator);
+
         private const string DOUBLE_FORMAT = "#,##0.00";
+        private const string DATE_FORMAT = "DD.MM.YY;@";
+
+        private const int DEFAULT_ROW_HEIGHT = (int)(0.5 * rowHeigthMultiplicator);        
 
         public static void Generate(string aXlsFile) {
             var wb = HSSFWorkbook.Create(InternalWorkbook.CreateWorkbook());
@@ -151,20 +153,28 @@ namespace ASConverter {
             stringCellDefaultLeftStyle.Alignment = HorizontalAlignment.Left;
             stringCellDefaultLeftStyle.SetFont(defaultFont);
 
+            var dataCellStyle = sheet.Workbook.CreateCellStyle();
+            dataCellStyle.DataFormat = sheet.Workbook.CreateDataFormat().GetFormat(DATE_FORMAT);
+            dataCellStyle.BorderBottom = BorderStyle.Medium;
+            dataCellStyle.BorderTop = BorderStyle.Medium;
+            dataCellStyle.BorderLeft = BorderStyle.Medium;            
+            dataCellStyle.BorderRight = BorderStyle.Medium;
+            dataCellStyle.SetFont(defaultFont);
+
             var unicCellStyle = sheet.Workbook.CreateCellStyle();
             unicCellStyle.BorderBottom = BorderStyle.Medium;
             unicCellStyle.SetFont(defaultFont);        
 
             var row = sheet.CreateRow(0);
             row.Height = DEFAULT_ROW_HEIGHT;
-            var cell = row.CreateCell(0, CellType.String);                        
+            var cell = row.CreateCell(0);                        
             cell.SetCellValue("Остаток на начало периода");
             cell.CellStyle = unicCellStyle;
-            cell = row.CreateCell(1, CellType.String);
+            cell = row.CreateCell(1);
             cell.CellStyle = unicCellStyle;
-            cell = row.CreateCell(2, CellType.String);
-            cell.CellStyle = unicCellStyle;
-            sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 2));
+            cell = row.CreateCell(2);
+            cell.CellStyle = dataCellStyle;
+            //sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 2));
 
             cell = row.CreateCell(3, CellType.Numeric);                        
             cell.SetCellValue(aStartAmount);
@@ -175,11 +185,11 @@ namespace ASConverter {
             cell = row.CreateCell(0, CellType.String);            
             cell.SetCellValue("Обороты за период");
             cell.CellStyle = unicCellStyle;
-            cell = row.CreateCell(1, CellType.String);
+            cell = row.CreateCell(1);
             cell.CellStyle = unicCellStyle;
-            cell = row.CreateCell(2, CellType.String);
+            cell = row.CreateCell(2);
             cell.CellStyle = unicCellStyle;
-            sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(1, 1, 0, 2));
+            //sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(1, 1, 0, 2));
             cell = row.CreateCell(3, CellType.Numeric);            
             cell.SetCellValue(0.0);
             cell.CellStyle = doubleCellDefaultStyle;
@@ -204,9 +214,13 @@ namespace ASConverter {
 
             row = sheet.CreateRow(2);
             row.Height = DEFAULT_ROW_HEIGHT;
-            cell = row.CreateCell(0, CellType.String);            
+            cell = row.CreateCell(0);            
             cell.SetCellValue("Остаток на конец периода");
-            sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(2, 2, 0, 2));
+            cell = row.CreateCell(1);
+            cell.CellStyle = unicCellStyle;
+            cell = row.CreateCell(2);
+            cell.CellStyle = dataCellStyle;
+            //sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(2, 2, 0, 2));
             cell = row.CreateCell(3, CellType.Numeric);            
             cell.SetCellFormula("D1+D2-E2");
             cell.CellStyle = doubleCellBoldStyle;
@@ -224,7 +238,7 @@ namespace ASConverter {
             sheet.SetColumnWidth(2, (int)(1.7 * rowWidthMultiplicator));
             sheet.SetColumnWidth(3, (int)(2.91 * rowWidthMultiplicator));
             sheet.SetColumnWidth(4, (int)(2.91 * rowWidthMultiplicator));
-            sheet.SetColumnWidth(5, (int)(9.79 * rowWidthMultiplicator));
+            sheet.SetColumnWidth(5, (int)(8.3 * rowWidthMultiplicator));
             sheet.SetColumnWidth(6, (int)(2.85 * rowWidthMultiplicator));
             sheet.SetColumnWidth(7, (int)(2.3 * rowWidthMultiplicator));
             sheet.SetColumnWidth(8, (int)(2.46 * rowWidthMultiplicator));
@@ -326,15 +340,15 @@ namespace ASConverter {
 
             var stringCellStyle = shield.Workbook.CreateCellStyle();            
             stringCellStyle.BorderRight = BorderStyle.Medium;
-            stringCellStyle.SetFont(defaultFont);
+            stringCellStyle.SetFont(defaultFont);            
 
             var ndsCellStyle = shield.Workbook.CreateCellStyle();
             ndsCellStyle.BorderRight = BorderStyle.Medium;
-            ndsCellStyle.Alignment = HorizontalAlignment.Right;
+            ndsCellStyle.Alignment = HorizontalAlignment.Center;
             ndsCellStyle.SetFont(defaultFont);
 
             var dataCellStyle = shield.Workbook.CreateCellStyle();
-            dataCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat("DD.MM.YY;@");            
+            dataCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DATE_FORMAT);            
             dataCellStyle.BorderRight = BorderStyle.Medium;
             dataCellStyle.SetFont(defaultFont);
 
@@ -412,7 +426,7 @@ namespace ASConverter {
             // П.п
             cell = row.CreateCell(10);
             cell.SetCellValue(order.Number);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = ndsCellStyle;
 
             //КПП
             cell = row.CreateCell(11);            

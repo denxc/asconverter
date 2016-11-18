@@ -43,6 +43,7 @@
             this.selectedShieldBox = new System.Windows.Forms.ComboBox();
             this.label3 = new System.Windows.Forms.Label();
             this.exitButton = new System.Windows.Forms.Button();
+            this.openButton = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -149,6 +150,7 @@
             this.destFileInfoBox.Size = new System.Drawing.Size(389, 36);
             this.destFileInfoBox.TabIndex = 13;
             this.destFileInfoBox.Text = "Файл не выбран.";
+            this.destFileInfoBox.TextChanged += new System.EventHandler(this.destFileInfoBox_TextChanged);
             // 
             // menuStrip1
             // 
@@ -236,12 +238,25 @@
             this.exitButton.UseVisualStyleBackColor = true;
             this.exitButton.Click += new System.EventHandler(this.button1_Click);
             // 
+            // openButton
+            // 
+            this.openButton.Enabled = false;
+            this.openButton.Location = new System.Drawing.Point(325, 185);
+            this.openButton.Name = "openButton";
+            this.openButton.Size = new System.Drawing.Size(76, 21);
+            this.openButton.TabIndex = 21;
+            this.openButton.Tag = "";
+            this.openButton.Text = "Открыть";
+            this.openButton.UseVisualStyleBackColor = true;
+            this.openButton.Click += new System.EventHandler(this.openButton_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.exitButton;
             this.ClientSize = new System.Drawing.Size(414, 413);
+            this.Controls.Add(this.openButton);
             this.Controls.Add(this.exitButton);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.selectedShieldBox);
@@ -294,6 +309,7 @@
         private System.Windows.Forms.ComboBox selectedShieldBox;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button exitButton;
+        private System.Windows.Forms.Button openButton;
     }
 }
 

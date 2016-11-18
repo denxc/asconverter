@@ -36,21 +36,19 @@ namespace ASConverter {
         private static string START_AMOUNT = "НачальныйОстаток";
         private static string END_AMOUNT = "КонечныйОстаток";
 
-        public static List<OrderEntity> LoadOrders(string aFileName, out double aStartAmount, out double aEndAmount) {
+        public static List<OrderEntity> LoadOrders(string aFileName, out AccountSection aStartAmount, out AccountSection aEndAmount) {
             var orders = new List<OrderEntity>();            
             var lines = File.ReadAllLines(aFileName, Encoding.GetEncoding("Windows-1251"));
-            aStartAmount = 0;
-            aEndAmount = 0;
-            var findStartAmount = false;
-            for (var i = 0; i < lines.Length; ++i) {
-                if (lines[i].StartsWith(END_AMOUNT)) {
-                    aEndAmount = Convert.ToDouble(lines[i].Substring(lines[i].LastIndexOf('=') + 1).Replace('.', ','));
-                }
-                if (!findStartAmount && lines[i].StartsWith(START_AMOUNT)) {
-                    aStartAmount = Convert.ToDouble(lines[i].Substring(lines[i].LastIndexOf('=') + 1).Replace('.', ','));
-                    findStartAmount = true;
-                }
-
+            var accountSections = LoadAccountSections(lines);
+            if (accountSections.Count == 0) {
+                throw new ArgumentException("В выписке не найдено ни одной секции \"СекцияРасчСчет\", невозможно определить начальный и конечный остаток.");
+            }
+            accountSections.Sort(new AccountSectionSorterByStartDate());
+            aStartAmount = accountSections[0];
+            accountSections.Sort(new AccountSectionSorterByEndDate());
+            aEndAmount = accountSections[accountSections.Count - 1];
+                        
+            for (var i = 0; i < lines.Length; ++i) {                
                 if (lines[i].StartsWith(START_ORDER)) {
                     var order = LoadOrder(lines, i + 1);                    
                     orders.Add(order);                    
@@ -59,6 +57,10 @@ namespace ASConverter {
             }            
 
             return orders;
+        }
+
+        private static List<AccountSection> LoadAccountSections(string[] lines) {
+            throw new NotImplementedException();
         }
 
         private static OrderEntity LoadOrder(string[] lines, int startIndex) {
@@ -158,10 +160,8 @@ namespace ASConverter {
             order.OwnerName = order.OwnerName.Replace(order.OwnerInn, string.Empty);
             order.ContractorName = order.ContractorName.Replace(order.ContractorINN, string.Empty);
 
-            order.OwnerName = order.OwnerName.Replace("Общество с ограниченной ответственностью", "ООО");
-            order.OwnerName = order.OwnerName.Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО");
-            order.ContractorName = order.ContractorName.Replace("Общество с ограниченной ответственностью", "ООО");
-            order.ContractorName = order.ContractorName.Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО");
+            order.OwnerName = ReplaceCompanyType(order.OwnerName);
+            order.ContractorName = ReplaceCompanyType(order.ContractorName);
 
             if (order.OwnerKPP == "0") {
                 order.OwnerKPP = string.Empty;
@@ -171,6 +171,22 @@ namespace ASConverter {
             }
 
             return order;                                 
+        }
+
+        private static string ReplaceCompanyType(string aCompany) {
+            return aCompany
+                .Replace("Общество с ограниченной ответственностью", "ООО")
+                .Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО")
+                .Replace("Открытое акционерное общество", "ОАО")
+                .Replace("ОТКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ОАО")
+                .Replace("Публичное акционерное общество", "ПАО")
+                .Replace("ПУБЛИЧНОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ПАО")
+                .Replace("Закрытое акционерное общество", "ЗАО")
+                .Replace("ЗАКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ЗАО")
+                .Replace("Акционерное общество", "АО")
+                .Replace("АКЦИОНЕРНОЕ ОБЩЕСТВО", "АО")
+                .Replace("Индивидуальный предприниматель", "ИП")
+                .Replace("ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ", "ИП");
         }
 
         private static string FindLine(string[] lines, string startStr, int startIndex) {
