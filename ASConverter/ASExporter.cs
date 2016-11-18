@@ -16,7 +16,7 @@ namespace ASConverter {
         private const int rowWidthMultiplicator = 1309;
 
         private const string DEFAULT_REPORT = "Консолидированный отчет";
-        private const string START_SHIELD_NAME = "Empty";
+        private const string START_SHIELD_NAME = "Empty1412";
 
         private static string[] defaultColumns = { "Клиент", "Книга продаж", "Дата", "Приход", "Расход", "Контрагент",
                                                 "ИНН", "Ставка НДС", "Сумма НДС", "Назначение платежа", "П/п", "КПП",
@@ -25,14 +25,18 @@ namespace ASConverter {
         private const string DOUBLE_FORMAT = "#,##0.00";
         private const string DATE_FORMAT = "DD.MM.YY;@";
 
-        private const int DEFAULT_ROW_HEIGHT = (int)(0.5 * rowHeigthMultiplicator);        
+        private const int DEFAULT_ROW_HEIGHT = (int)(0.5 * rowHeigthMultiplicator);
+
+        private static Dictionary<int, ICellStyle> styles = new Dictionary<int, ICellStyle>();
+        private static Dictionary<int, ICellStyle> greenStyles = new Dictionary<int, ICellStyle>();
 
         public static void Generate(string aXlsFile) {
             var wb = HSSFWorkbook.Create(InternalWorkbook.CreateWorkbook());
-            var sh = (HSSFSheet)wb.CreateSheet(START_SHIELD_NAME);
+            var shield = (HSSFSheet)wb.CreateSheet(START_SHIELD_NAME);
+            PrepareEmptyShield(shield);
             using (var fs = new FileStream(aXlsFile, FileMode.Create, FileAccess.Write)) {
                 wb.Write(fs);
-            }
+            }            
         }
 
         public static string[] GetShields(string aXlsFile) {
@@ -65,7 +69,7 @@ namespace ASConverter {
             return string.Empty;
         }
 
-        public static void CreateNewShield(string aXlsFile, string shieldName, OrderEntity aOrder, double aStartAmount) {
+        public static void CreateNewShield(string aXlsFile, string shieldName, OrderEntity aOrder, AccountSection aStartAccountSection, AccountSection aEndAccountSection) {
             HSSFWorkbook wb = null;
             using (var fs = new FileStream(aXlsFile, FileMode.Open, FileAccess.Read)) {
                 wb = new HSSFWorkbook(fs);
@@ -76,24 +80,19 @@ namespace ASConverter {
             if (defaultReportShield == null) {
                 defaultReportShield = wb.CreateSheet(DEFAULT_REPORT);
                 wb.SetSheetOrder(DEFAULT_REPORT, 0);
-                PrepareShieldTop(defaultReportShield, aOrder, aStartAmount);
+                PrepareShieldTop(defaultReportShield, aOrder, aStartAccountSection, aEndAccountSection);
             } else {
                 var row = defaultReportShield.GetRow(0);
                 var cell = row.GetCell(3);
                 var cellValue = cell.NumericCellValue;
-                cell.SetCellValue(cellValue + aStartAmount);                
+                cell.SetCellValue(cellValue + aStartAccountSection.StartAmount);                                
             }
 
             var defaultReportIndex = wb.GetSheetIndex(defaultReportShield);
 
             var sheet = wb.CreateSheet(shieldName);
             wb.SetSheetOrder(shieldName, defaultReportIndex);
-            PrepareShieldTop(sheet, aOrder, aStartAmount);
-
-            var emptyShield = wb.GetSheet(START_SHIELD_NAME);
-            if (emptyShield != null) {
-                wb.SetSheetHidden(wb.GetSheetIndex(emptyShield), SheetState.VeryHidden);
-            }
+            PrepareShieldTop(sheet, aOrder, aStartAccountSection, aEndAccountSection);            
 
             wb.SetActiveSheet(defaultReportIndex);
 
@@ -103,7 +102,7 @@ namespace ASConverter {
             }
         }
 
-        private static void PrepareShieldTop(ISheet sheet, OrderEntity aOrder, double aStartAmount) {
+        private static void PrepareShieldTop(ISheet sheet, OrderEntity aOrder, AccountSection aStartAccountSection, AccountSection aEndAccountSection) {
             var boldFont = sheet.Workbook.CreateFont();
             boldFont.FontName = "Calibri";
             boldFont.FontHeightInPoints = 11;            
@@ -111,7 +110,12 @@ namespace ASConverter {
 
             var defaultFont = sheet.Workbook.CreateFont();
             defaultFont.FontName = "Calibri";
-            defaultFont.FontHeightInPoints = 11;            
+            defaultFont.FontHeightInPoints = 11;
+
+            var hiddenFont = sheet.Workbook.CreateFont();
+            hiddenFont.FontName = "Calibri";
+            hiddenFont.FontHeightInPoints = 11;
+            hiddenFont.Color = HSSFColor.White.Index;
 
             var doubleCellBoldStyle = sheet.Workbook.CreateCellStyle();
             doubleCellBoldStyle.DataFormat = sheet.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
@@ -163,7 +167,11 @@ namespace ASConverter {
 
             var unicCellStyle = sheet.Workbook.CreateCellStyle();
             unicCellStyle.BorderBottom = BorderStyle.Medium;
-            unicCellStyle.SetFont(defaultFont);        
+            unicCellStyle.SetFont(defaultFont);
+
+            var doubleCellHiddenStyle = sheet.Workbook.CreateCellStyle();
+            doubleCellHiddenStyle.DataFormat = sheet.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
+            doubleCellHiddenStyle.SetFont(hiddenFont);
 
             var row = sheet.CreateRow(0);
             row.Height = DEFAULT_ROW_HEIGHT;
@@ -173,11 +181,15 @@ namespace ASConverter {
             cell = row.CreateCell(1);
             cell.CellStyle = unicCellStyle;
             cell = row.CreateCell(2);
-            cell.CellStyle = dataCellStyle;
+            cell.CellStyle = unicCellStyle;
+            if (!sheet.SheetName.Equals(DEFAULT_REPORT)) {
+                cell.CellStyle = dataCellStyle;
+                cell.SetCellValue(aStartAccountSection.StartData.Date);
+            }
             //sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(0, 0, 0, 2));
 
             cell = row.CreateCell(3, CellType.Numeric);                        
-            cell.SetCellValue(aStartAmount);
+            cell.SetCellValue(aStartAccountSection.StartAmount);
             cell.CellStyle = doubleCellDefaultStyle;
 
             row = sheet.CreateRow(1);
@@ -219,11 +231,20 @@ namespace ASConverter {
             cell = row.CreateCell(1);
             cell.CellStyle = unicCellStyle;
             cell = row.CreateCell(2);
-            cell.CellStyle = dataCellStyle;
+            cell.CellStyle = unicCellStyle;
+            if (!sheet.SheetName.Equals(DEFAULT_REPORT)) {
+                cell.CellStyle = dataCellStyle;
+                cell.SetCellValue(aEndAccountSection.EndData.Date);
+            }            
             //sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(2, 2, 0, 2));
             cell = row.CreateCell(3, CellType.Numeric);            
             cell.SetCellFormula("D1+D2-E2");
-            cell.CellStyle = doubleCellBoldStyle;
+            cell.CellStyle = doubleCellBoldStyle;            
+            if (!sheet.SheetName.Equals(DEFAULT_REPORT)) {
+                cell = row.CreateCell(4, CellType.Numeric);
+                cell.CellStyle = doubleCellHiddenStyle;
+                cell.SetCellValue(aEndAccountSection.EndAmount);
+            }            
 
             row = sheet.CreateRow(3);
             row.Height = DEFAULT_ROW_HEIGHT;
@@ -248,20 +269,100 @@ namespace ASConverter {
             sheet.SetColumnWidth(12, (int)(4.65 * rowWidthMultiplicator));
             sheet.SetColumnWidth(13, (int)(18.0 * rowWidthMultiplicator));
 
-            sheet.CreateFreezePane(0, 4);
+            sheet.CreateFreezePane(0, 4);            
         }
 
-        public static int Export(string destFilePath, string aShieldName, OrderEntity[] orders, double endAmount, out string message) {
+        private static void PrepareEmptyShield(ISheet shield) {
+            var defaultFont = shield.Workbook.CreateFont();
+            defaultFont.FontName = "Calibri";
+            defaultFont.Color = HSSFColor.Black.Index;
+            defaultFont.FontHeightInPoints = 11;
+            var greenFont = shield.Workbook.CreateFont();
+            greenFont.FontName = "Calibri";
+            greenFont.Color = HSSFColor.Green.Index;
+            greenFont.FontHeightInPoints = 11;
+
+            var doubleCellStyle = shield.Workbook.CreateCellStyle();
+            doubleCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
+            doubleCellStyle.BorderRight = BorderStyle.Medium;
+            doubleCellStyle.SetFont(defaultFont);
+            var stringCellStyle = shield.Workbook.CreateCellStyle();
+            stringCellStyle.BorderRight = BorderStyle.Medium;
+            stringCellStyle.SetFont(defaultFont);
+            var ndsCellStyle = shield.Workbook.CreateCellStyle();
+            ndsCellStyle.BorderRight = BorderStyle.Medium;
+            ndsCellStyle.Alignment = HorizontalAlignment.Center;
+            ndsCellStyle.SetFont(defaultFont);
+            var dataCellStyle = shield.Workbook.CreateCellStyle();
+            dataCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DATE_FORMAT);
+            dataCellStyle.BorderRight = BorderStyle.Medium;
+            dataCellStyle.SetFont(defaultFont);
+
+            var doubleCellGreenStyle = shield.Workbook.CreateCellStyle();
+            doubleCellGreenStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
+            doubleCellGreenStyle.BorderRight = BorderStyle.Medium;
+            doubleCellGreenStyle.SetFont(greenFont);
+            var stringCellGreenStyle = shield.Workbook.CreateCellStyle();
+            stringCellGreenStyle.BorderRight = BorderStyle.Medium;
+            stringCellGreenStyle.SetFont(greenFont);
+            var ndsCellGreenStyle = shield.Workbook.CreateCellStyle();
+            ndsCellGreenStyle.BorderRight = BorderStyle.Medium;
+            ndsCellGreenStyle.Alignment = HorizontalAlignment.Center;
+            ndsCellGreenStyle.SetFont(greenFont);
+            var dataCellGreenStyle = shield.Workbook.CreateCellStyle();
+            dataCellGreenStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DATE_FORMAT);
+            dataCellGreenStyle.BorderRight = BorderStyle.Medium;
+            dataCellGreenStyle.SetFont(greenFont);
+
+            var row = shield.CreateRow(0);            
+            row.CreateCell(0).CellStyle = stringCellStyle;
+            row.CreateCell(1).CellStyle = stringCellStyle;
+            row.CreateCell(2).CellStyle = dataCellStyle;
+            row.CreateCell(3).CellStyle = doubleCellStyle;
+            row.CreateCell(4).CellStyle = doubleCellStyle;
+            row.CreateCell(5).CellStyle = stringCellStyle;
+            row.CreateCell(6).CellStyle = stringCellStyle;
+            row.CreateCell(7).CellStyle = ndsCellStyle;
+            row.CreateCell(8).CellStyle = doubleCellStyle;
+            row.CreateCell(9).CellStyle = stringCellStyle;
+            row.CreateCell(10).CellStyle = ndsCellStyle;
+            row.CreateCell(11).CellStyle = stringCellStyle;
+            row.CreateCell(12).CellStyle = stringCellStyle;
+            row.CreateCell(13).CellStyle = stringCellStyle;
+
+            row = shield.CreateRow(1);
+            row.CreateCell(0).CellStyle = stringCellGreenStyle;
+            row.CreateCell(1).CellStyle = stringCellGreenStyle;
+            row.CreateCell(2).CellStyle = dataCellGreenStyle;
+            row.CreateCell(3).CellStyle = doubleCellGreenStyle;
+            row.CreateCell(4).CellStyle = doubleCellGreenStyle;
+            row.CreateCell(5).CellStyle = stringCellGreenStyle;
+            row.CreateCell(6).CellStyle = stringCellGreenStyle;
+            row.CreateCell(7).CellStyle = ndsCellGreenStyle;
+            row.CreateCell(8).CellStyle = doubleCellGreenStyle;
+            row.CreateCell(9).CellStyle = stringCellGreenStyle;
+            row.CreateCell(10).CellStyle = ndsCellGreenStyle;
+            row.CreateCell(11).CellStyle = stringCellGreenStyle;
+            row.CreateCell(12).CellStyle = stringCellGreenStyle;
+            row.CreateCell(13).CellStyle = stringCellGreenStyle;
+
+            shield.Workbook.SetSheetHidden(shield.Workbook.GetSheetIndex(shield), SheetState.VeryHidden);
+        }
+
+        public static int Export(string destFilePath, string aShieldName, OrderEntity[] orders, AccountSection aStartAccountSection, AccountSection aEndAccountSection, out string message) {
             HSSFWorkbook wb = null;
             using (var fs = new FileStream(destFilePath, FileMode.Open, FileAccess.Read)) {
                 wb = new HSSFWorkbook(fs);
                 fs.Close();
-            }
+            }            
 
             ClearAllColors(wb);
 
             var countAdded = 0;
             var shield = wb.GetSheet(aShieldName);
+
+            LoadCellStyles(wb);            
+
             var defaultReport = wb.GetSheet(DEFAULT_REPORT);
             foreach (var order in orders) {
                 if (AddOrdeToShield(shield, order)) {
@@ -270,10 +371,14 @@ namespace ASConverter {
                 }
             }
 
-            var defaultAmouond = GetEndAmount(defaultReport);
-            var curEndAmount = GetEndAmount(shield);
-            if (Math.Abs(curEndAmount - endAmount) > 0.01) {
-                message = string.Format("Возможно, за некоторый период выписки не импортированы.\nОжидался остаток: {0:0.##}, остаток в отчете: {1:0.##}", endAmount, curEndAmount);
+            var topEndAmount = CheckEndAmount(shield, aEndAccountSection);
+            CheckStartAmount(shield, defaultReport, aStartAccountSection);
+
+            EvaluateEndAmount(defaultReport);
+            var curEndAmount = EvaluateEndAmount(shield);
+            
+            if (Math.Abs(curEndAmount - topEndAmount) > 0.01) {
+                message = string.Format("Возможно, за некоторый период выписки не импортированы.\nОжидался остаток: {0:0.##}, остаток в отчете: {1:0.##}", topEndAmount, curEndAmount);
                 ColorEndAmound(shield, true);
             } else {
                 message = string.Empty;
@@ -286,6 +391,52 @@ namespace ASConverter {
             }
                         
             return countAdded;
+        }
+
+        private static double CheckEndAmount(ISheet shield, AccountSection aEndAccountSection) {
+            var dateCell = shield.GetRow(2).GetCell(2);
+            var hiddenAmountCell = shield.GetRow(2).GetCell(4);
+
+            var currentDate = dateCell.DateCellValue;
+
+            if (currentDate.Date >= aEndAccountSection.EndData.Date) {
+                return hiddenAmountCell.NumericCellValue;
+            }
+
+            dateCell.SetCellValue(aEndAccountSection.EndData.Date);            
+            hiddenAmountCell.SetCellValue(aEndAccountSection.EndAmount);
+
+            return aEndAccountSection.EndAmount;
+        }
+
+        private static void CheckStartAmount(ISheet shield, ISheet defaultReport, AccountSection aStartAccountSection) {
+            var dateCell = shield.GetRow(0).GetCell(2);
+            var currentDate = dateCell.DateCellValue;
+            if (currentDate.Date < aStartAccountSection.StartData.Date) {
+                return;
+            }
+
+            var amountCell = shield.GetRow(0).GetCell(3);
+            var currentAmount = amountCell.NumericCellValue;
+
+            amountCell.SetCellValue(aStartAccountSection.StartAmount);
+            dateCell.SetCellValue(aStartAccountSection.StartData.Date);
+
+            var defaultAmountCell = defaultReport.GetRow(0).GetCell(3);
+            var defaultAmount = defaultAmountCell.NumericCellValue;
+            defaultAmountCell.SetCellValue(defaultAmount - currentAmount + aStartAccountSection.StartAmount);
+        }
+
+        private static void LoadCellStyles(IWorkbook wb) {
+            var shield = wb.GetSheet(START_SHIELD_NAME);
+            var row = shield.GetRow(0);
+            var greenRow = shield.GetRow(1);
+            styles.Clear();
+            greenStyles.Clear();
+            for (var i = 0; i < 14; ++i) {
+                styles[i] = row.GetCell(i).CellStyle;
+                greenStyles[i] = greenRow.GetCell(i).CellStyle;
+            }
         }
 
         private static void ColorEndAmound(ISheet shield, bool isRed) {
@@ -305,7 +456,7 @@ namespace ASConverter {
             row.GetCell(3).CellStyle = doubleCellStyle;
         }
 
-        private static double GetEndAmount(ISheet shield) {
+        private static double EvaluateEndAmount(ISheet shield) {
             var row = shield.GetRow(1);
             var prihod = row.GetCell(3);
             var rashod = row.GetCell(4);
@@ -326,49 +477,25 @@ namespace ASConverter {
             var position = FindBestPosition(shield, order);            
             if (position < 0) {
                 return false;
-            }
-
-            var defaultFont = shield.Workbook.CreateFont();
-            defaultFont.FontName = "Calibri";
-            defaultFont.Color = HSSFColor.Green.Index;
-            defaultFont.FontHeightInPoints = 11;
-
-            var doubleCellStyle = shield.Workbook.CreateCellStyle();
-            doubleCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DOUBLE_FORMAT);
-            doubleCellStyle.BorderRight = BorderStyle.Medium;
-            doubleCellStyle.SetFont(defaultFont);
-
-            var stringCellStyle = shield.Workbook.CreateCellStyle();            
-            stringCellStyle.BorderRight = BorderStyle.Medium;
-            stringCellStyle.SetFont(defaultFont);            
-
-            var ndsCellStyle = shield.Workbook.CreateCellStyle();
-            ndsCellStyle.BorderRight = BorderStyle.Medium;
-            ndsCellStyle.Alignment = HorizontalAlignment.Center;
-            ndsCellStyle.SetFont(defaultFont);
-
-            var dataCellStyle = shield.Workbook.CreateCellStyle();
-            dataCellStyle.DataFormat = shield.Workbook.CreateDataFormat().GetFormat(DATE_FORMAT);            
-            dataCellStyle.BorderRight = BorderStyle.Medium;
-            dataCellStyle.SetFont(defaultFont);
+            }            
 
             var row = InsertRow(shield, position);            
-            row.Height = DEFAULT_ROW_HEIGHT;
+            row.Height = DEFAULT_ROW_HEIGHT;            
 
             // клиент.
             var cell = row.CreateCell(0);            
             cell.SetCellValue(string.Empty);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[0];
 
             // книга продаж.
             cell = row.CreateCell(1);            
             cell.SetCellValue(string.Empty);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[1];
 
             // дата.
             cell = row.CreateCell(2);
             cell.SetCellValue(order.date.Date);            
-            cell.CellStyle = dataCellStyle;            
+            cell.CellStyle = greenStyles[2];            
 
             // Приход.
             cell = row.CreateCell(3);            
@@ -377,7 +504,7 @@ namespace ASConverter {
             } else {
                 //cell.SetCellValue(string.Empty);
             }
-            cell.CellStyle = doubleCellStyle;
+            cell.CellStyle = greenStyles[3];
 
             // расход.
             cell = row.CreateCell(4);            
@@ -386,17 +513,17 @@ namespace ASConverter {
             } else {
                 //cell.SetCellValue(string.Empty);                
             }
-            cell.CellStyle = doubleCellStyle;
+            cell.CellStyle = greenStyles[4];
 
             // контрагент.
             cell = row.CreateCell(5);                        
             cell.SetCellValue(order.ContractorName);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[5];
 
             // инн
             cell = row.CreateCell(6);                        
             cell.SetCellValue(string.IsNullOrEmpty(order.ContractorINN) ? string.Empty : order.ContractorINN);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[6];
 
             // ставка ндс.
             cell = row.CreateCell(7);            
@@ -407,7 +534,7 @@ namespace ASConverter {
             } else {
                 cell.SetCellValue(order.Nds + "");
             }
-            cell.CellStyle = ndsCellStyle;
+            cell.CellStyle = greenStyles[7];
 
             // сумма ндс.            
             cell = row.CreateCell(8);            
@@ -416,17 +543,17 @@ namespace ASConverter {
             } else {                
                 cell.SetCellValue(order.NdsSum);
             }
-            cell.CellStyle = doubleCellStyle;
+            cell.CellStyle = greenStyles[8];
 
             // назначение платежа.
             cell = row.CreateCell(9);            
             cell.SetCellValue(order.PayDestination);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[9];
 
             // П.п
             cell = row.CreateCell(10);
             cell.SetCellValue(order.Number);
-            cell.CellStyle = ndsCellStyle;
+            cell.CellStyle = greenStyles[10];
 
             //КПП
             cell = row.CreateCell(11);            
@@ -435,17 +562,17 @@ namespace ASConverter {
             } else {
                 cell.SetCellValue(order.ContractorKPP);
             }
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[11];
 
             // р счет контрагента.
             cell = row.CreateCell(12);                        
             cell.SetCellValue(order.ContractorAccount);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[12];
 
             // банк контрагента.
-            cell = row.CreateCell(13, CellType.String);            
+            cell = row.CreateCell(13);            
             cell.SetCellValue(order.ContractorBank);
-            cell.CellStyle = stringCellStyle;
+            cell.CellStyle = greenStyles[13];
 
             return true;
         }
@@ -487,16 +614,20 @@ namespace ASConverter {
             return newRow;
         }
 
-        private static void ClearAllColors(HSSFWorkbook wb) {            
+        private static void ClearAllColors(HSSFWorkbook wb) {
+            LoadCellStyles(wb);          
             var shieldsCount = wb.NumberOfSheets;
-            for (var i = 0; i < shieldsCount; ++i) {
+            for (var i = 0; i < shieldsCount; ++i) {               
                 var shield = wb.GetSheetAt(i);
+                if (shield.SheetName.Equals(START_SHIELD_NAME)) {
+                    continue;
+                }
                 var lastRowNumber = shield.LastRowNum;
                 for (var j = 4; j <= lastRowNumber; ++j) {
                     var row = shield.GetRow(j);
                     if (row.Cells != null) {
-                        foreach (var cell in row.Cells) {                            
-                            cell.CellStyle.GetFont(wb).Color = HSSFColor.Black.Index;
+                        for (var k = 0; k < 14; ++k) {
+                            row.GetCell(k).CellStyle = styles[k];
                         }
                     }
                 }

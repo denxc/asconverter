@@ -8,7 +8,7 @@ namespace ASConverter {
                 return 0;
             }
 
-            return x.StartData < y.StartData ? 1 : -1;
+            return x.StartData < y.StartData ? -1 : 1;
         }
     }
 
@@ -18,7 +18,7 @@ namespace ASConverter {
                 return 0;
             }
 
-            return x.EndData < y.EndData? 1 : -1;
+            return x.EndData < y.EndData? -1 : 1;
         }
     }
 }

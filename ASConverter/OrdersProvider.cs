@@ -33,8 +33,12 @@ namespace ASConverter {
         private static string NO_NDS1 = "ндснеоблагается";
         private static string NO_NDS2 = "безналога";
 
+        private static string ACCOUNT_SECTION_START = "СекцияРасчСчет";
+        private static string ACCOUNT_SECTION_END = "КонецРасчСчет";
         private static string START_AMOUNT = "НачальныйОстаток";
         private static string END_AMOUNT = "КонечныйОстаток";
+        private static string START_DATE = "ДатаНачала";
+        private static string END_DATE = "ДатаКонца";
 
         public static List<OrderEntity> LoadOrders(string aFileName, out AccountSection aStartAmount, out AccountSection aEndAmount) {
             var orders = new List<OrderEntity>();            
@@ -60,7 +64,36 @@ namespace ASConverter {
         }
 
         private static List<AccountSection> LoadAccountSections(string[] lines) {
-            throw new NotImplementedException();
+            var accountSections = new List<AccountSection>();
+            for (var i = 0; i < lines.Length; ++i) {
+                if (lines[i].StartsWith(ACCOUNT_SECTION_START)) {
+                    var accountSection = LoadAccountSection(lines, i);
+                    accountSections.Add(accountSection);
+                }
+            }
+
+            return accountSections;
+        }
+
+        private static AccountSection LoadAccountSection(string[] lines, int startIndex) {
+            var accountSection = new AccountSection();
+            for (var i = startIndex; i < lines.Length; ++i) {
+                var line = lines[i];
+                if (line.StartsWith(ACCOUNT_SECTION_END)) {
+                    return accountSection;
+                }
+                if (line.StartsWith(START_AMOUNT)) {
+                    accountSection.StartAmount = Convert.ToDouble(line.Substring(line.LastIndexOf('=') + 1).Replace('.', ','));
+                } else if (line.StartsWith(END_AMOUNT)) {
+                    accountSection.EndAmount = Convert.ToDouble(line.Substring(line.LastIndexOf('=') + 1).Replace('.', ','));
+                } else if (line.StartsWith(START_DATE)) {
+                    accountSection.StartData = DateTime.Parse(line.Substring(line.LastIndexOf('=') + 1));
+                } else if (line.StartsWith(END_DATE)) {
+                    accountSection.EndData = DateTime.Parse(line.Substring(line.LastIndexOf('=') + 1));
+                }
+            }
+
+            return null;
         }
 
         private static OrderEntity LoadOrder(string[] lines, int startIndex) {
@@ -155,10 +188,14 @@ namespace ASConverter {
                 order.ContractorAccount = poluchatelSchet.Substring(poluchatelSchet.LastIndexOf('=') + 1);
             }
 
-            order.OwnerName = order.OwnerName.Replace("ИНН " + order.OwnerInn, string.Empty);
-            order.ContractorName = order.ContractorName.Replace("ИНН " + order.ContractorINN, string.Empty);
-            order.OwnerName = order.OwnerName.Replace(order.OwnerInn, string.Empty);
-            order.ContractorName = order.ContractorName.Replace(order.ContractorINN, string.Empty);
+            if (!string.IsNullOrEmpty(order.OwnerInn)) {
+                order.OwnerName = order.OwnerName.Replace("ИНН " + order.OwnerInn, string.Empty);
+                order.OwnerName = order.OwnerName.Replace(order.OwnerInn, string.Empty);
+            }
+            if (!string.IsNullOrEmpty(order.ContractorINN)) {
+                order.ContractorName = order.ContractorName.Replace("ИНН " + order.ContractorINN, string.Empty);
+                order.ContractorName = order.ContractorName.Replace(order.ContractorINN, string.Empty);
+            }            
 
             order.OwnerName = ReplaceCompanyType(order.OwnerName);
             order.ContractorName = ReplaceCompanyType(order.ContractorName);

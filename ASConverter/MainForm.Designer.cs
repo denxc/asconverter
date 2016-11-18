@@ -117,7 +117,7 @@
             this.sourceFileInfoBox.Location = new System.Drawing.Point(12, 98);
             this.sourceFileInfoBox.Multiline = true;
             this.sourceFileInfoBox.Name = "sourceFileInfoBox";
-            this.sourceFileInfoBox.Size = new System.Drawing.Size(389, 36);
+            this.sourceFileInfoBox.Size = new System.Drawing.Size(307, 42);
             this.sourceFileInfoBox.TabIndex = 11;
             this.sourceFileInfoBox.Text = "Файл не выбран.";
             // 
@@ -147,7 +147,7 @@
             this.destFileInfoBox.Location = new System.Drawing.Point(12, 198);
             this.destFileInfoBox.Multiline = true;
             this.destFileInfoBox.Name = "destFileInfoBox";
-            this.destFileInfoBox.Size = new System.Drawing.Size(389, 36);
+            this.destFileInfoBox.Size = new System.Drawing.Size(307, 47);
             this.destFileInfoBox.TabIndex = 13;
             this.destFileInfoBox.Text = "Файл не выбран.";
             this.destFileInfoBox.TextChanged += new System.EventHandler(this.destFileInfoBox_TextChanged);

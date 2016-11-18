@@ -133,7 +133,7 @@ namespace ASConverter {
         }
 
         private void оПрограммеToolStripMenuItem1_Click(object sender, EventArgs e) {
-            MessageBox.Show("Версия 2.0");
+            MessageBox.Show("Версия 2.3");
         }
 
         private void button1_Click(object sender, EventArgs e) {
@@ -166,8 +166,8 @@ namespace ASConverter {
                 return false;
             }
 
-            double startAmount;
-            double endAmount;
+            AccountSection startAmount;
+            AccountSection endAmount;
             var orders = TryLoadOrders(sourceFilePath, out startAmount, out endAmount);
             if (orders == null || orders.Length == 0) {
                 return false;
@@ -181,13 +181,13 @@ namespace ASConverter {
                 return false;                
             }
 
-            if (TryCheckShieldCorrection(destFilePath, orders[0], startAmount) == false) {
+            if (TryCheckShieldCorrection(destFilePath, orders[0], startAmount, endAmount) == false) {
                 return false;
             }
             
             try {                    
                 var message = string.Empty;
-                var count = ASExporter.Export(destFilePath, selectedShieldBox.Text, orders, endAmount, out message);                
+                var count = ASExporter.Export(destFilePath, selectedShieldBox.Text, orders, startAmount, endAmount, out message);                
                 MessageBox.Show("Успешно добавлено операций: " + count + "\n" + message);
                 return true;
             } catch (Exception ex) {
@@ -196,7 +196,7 @@ namespace ASConverter {
             }
         }
 
-        private bool TryCheckShieldCorrection(string aXlsFile, OrderEntity orderEntity, double aStartAmount) {
+        private bool TryCheckShieldCorrection(string aXlsFile, OrderEntity orderEntity, AccountSection aStartAmount, AccountSection aEndAmount) {
             try {
                 var destShield = selectedShieldBox.Text;
                 var shields = ASExporter.GetShields(aXlsFile);
@@ -208,7 +208,7 @@ namespace ASConverter {
                     }
                 }
 
-                ASExporter.CreateNewShield(aXlsFile, destShield, orderEntity, aStartAmount);
+                ASExporter.CreateNewShield(aXlsFile, destShield, orderEntity, aStartAmount, aEndAmount);
                 return true;
             } catch (Exception ex) {
                 MessageBox.Show("Ошибка при создании листа: " + ex.Message);
@@ -255,6 +255,6 @@ namespace ASConverter {
             } catch (Exception ex) {
                 MessageBox.Show("При открытии файла произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
+        }        
     }
 }
