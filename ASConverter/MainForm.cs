@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace ASConverter {
@@ -52,8 +53,7 @@ namespace ASConverter {
             }
 
             var destFile = openFileDialog.FileName;
-
-            SelectDestFile(destFile);
+            SelectDestFile(destFile);            
         }
 
         private void SelectDestFile(string destFile) {
@@ -124,8 +124,10 @@ namespace ASConverter {
             if (saveFileDialog.ShowDialog() == DialogResult.OK) {
                 var fileName = saveFileDialog.FileName;                
                 try {
-                    ASExporter.Generate(fileName);
-                    SelectDestFile(fileName);
+                    new Thread(() => {
+                        ASExporter.Generate(fileName);
+                        SelectDestFile(fileName);
+                    }).Start();                    
                 } catch (Exception ex) {
                     MessageBox.Show("При создании отчета произошла ошибка: " + ex.Message);
                 }

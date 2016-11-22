@@ -47,6 +47,7 @@ namespace ASConverter {
                     var shieldName = wb.GetSheetAt(i).SheetName;
                     if (!shieldName.Equals(START_SHIELD_NAME) && !shieldName.Equals(DEFAULT_REPORT)) {
                         shields.Add(shieldName);
+                        System.Windows.Forms.Application.DoEvents();
                     }                    
                 }
             }

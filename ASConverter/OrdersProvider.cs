@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 
 namespace ASConverter {
@@ -16,12 +17,14 @@ namespace ASConverter {
         private static string PLATELSHIK = "Плательщик=";
         private static string PLATELSHIK1 = "Плательщик1=";
         private static string PLATEL_SCHET = "ПлательщикРасчСчет";
+        private static string PLATEL_SCHET1 = "ПлательщикСчет";
         private static string PLATEL_INN = "ПлательщикИНН";
         private static string PLATEL_KPP = "ПлательщикКПП";
         private static string PLATEL_BANK = "ПлательщикБанк";
         private static string POLUCHATEL = "Получатель=";
         private static string POLUCHATEL1 = "Получатель1=";
         private static string POLUCHAT_SCHET = "ПолучательРасчСчет";
+        private static string POLUCHAT_SCHET1 = "ПолучательСчет";
         private static string POLUCHAT_INN = "ПолучательИНН";
         private static string POLUCHAT_KPP = "ПолучательКПП";
         private static string POLUCHAT_BANK = "ПолучательБанк";
@@ -54,9 +57,13 @@ namespace ASConverter {
                         
             for (var i = 0; i < lines.Length; ++i) {                
                 if (lines[i].StartsWith(START_ORDER)) {
-                    var order = LoadOrder(lines, i + 1);                    
-                    orders.Add(order);                    
-                    Application.DoEvents();
+                    try {
+                        var order = LoadOrder(lines, i + 1);
+                        orders.Add(order);
+                        Application.DoEvents();
+                    } catch (Exception ex) {
+                        
+                    }
                 }
             }            
 
@@ -108,6 +115,7 @@ namespace ASConverter {
             var platelshik = FindLine(lines, PLATELSHIK, startIndex);
             var platelshik1 = FindLine(lines, PLATELSHIK1, startIndex);
             var platelSchet = FindLine(lines, PLATEL_SCHET, startIndex);
+            var platelSchet1 = FindLine(lines, PLATEL_SCHET1, startIndex);
             var platelInn = FindLine(lines, PLATEL_INN, startIndex);
             var platelKpp = FindLine(lines, PLATEL_KPP, startIndex);
             var platelBank = FindLine(lines, PLATEL_BANK, startIndex);
@@ -115,6 +123,7 @@ namespace ASConverter {
             var poluchatel = FindLine(lines, POLUCHATEL, startIndex);
             var poluchatel1 = FindLine(lines, POLUCHATEL1, startIndex);
             var poluchatelSchet = FindLine(lines, POLUCHAT_SCHET, startIndex);
+            var poluchatelSchet1 = FindLine(lines, POLUCHAT_SCHET1, startIndex);
             var poluchatelInn = FindLine(lines, POLUCHAT_INN, startIndex);
             var poluchatelKpp = FindLine(lines, POLUCHAT_KPP, startIndex);
             var poluchatelBank = FindLine(lines, POLUCHAT_BANK, startIndex);
@@ -149,52 +158,64 @@ namespace ASConverter {
             if (string.IsNullOrEmpty(dataSpisanoStr)) {
                 order.amountPostupilo = amountValue;
                 order.amountSpisano = 0;
-                order.date = DateTime.Parse(dataPostupilo.Substring(dataPostupilo.LastIndexOf('=') + 1));
+                order.date = DateTime.Parse(dataPostupilo?.Substring(dataPostupilo.LastIndexOf('=') + 1));
                 order.OwnerName = poluchatel?.Substring(poluchatel.LastIndexOf('=') + 1);
                 if (string.IsNullOrEmpty(order.OwnerName)) {
-                    order.OwnerName = poluchatel1.Substring(poluchatel1.LastIndexOf('=') + 1);
+                    order.OwnerName = poluchatel1?.Substring(poluchatel1.LastIndexOf('=') + 1);
                 }
-                order.OwnerBank = poluchatelBank.Substring(poluchatelBank.LastIndexOf('=') + 1);
-                order.OwnerInn = poluchatelInn.Substring(poluchatelInn.LastIndexOf('=') + 1);
+                order.OwnerBank = poluchatelBank?.Substring(poluchatelBank.LastIndexOf('=') + 1);
+                order.OwnerInn = poluchatelInn?.Substring(poluchatelInn.LastIndexOf('=') + 1);
                 order.OwnerKPP = poluchatelKpp?.Substring(poluchatelKpp.LastIndexOf('=') + 1);
-                order.OwnerAccount = poluchatelSchet.Substring(poluchatelSchet.LastIndexOf('=') + 1);
+                order.OwnerAccount = poluchatelSchet?.Substring(poluchatelSchet.LastIndexOf('=') + 1);
+                if (string.IsNullOrEmpty(order.OwnerAccount)) {
+                    order.OwnerAccount = poluchatelSchet1?.Substring(poluchatelSchet1.LastIndexOf('=') + 1);
+                }
                 order.ContractorName = platelshik?.Substring(platelshik.LastIndexOf('=') + 1);                
                 if (string.IsNullOrEmpty(order.ContractorName)) {
-                    order.ContractorName = platelshik1.Substring(platelshik1.LastIndexOf('=') + 1);
+                    order.ContractorName = platelshik1?.Substring(platelshik1.LastIndexOf('=') + 1);
                 }
                 order.ContractorKPP = platelKpp?.Substring(platelKpp.LastIndexOf('=') + 1);
                 order.ContractorINN = platelInn?.Substring(platelInn.LastIndexOf('=') + 1);
-                order.ContractorBank = platelBank.Substring(platelBank.LastIndexOf('=') + 1);
-                order.ContractorAccount = platelSchet.Substring(platelSchet.LastIndexOf('=') + 1);
+                order.ContractorBank = platelBank?.Substring(platelBank.LastIndexOf('=') + 1);
+                order.ContractorAccount = platelSchet?.Substring(platelSchet.LastIndexOf('=') + 1);
+                if (string.IsNullOrEmpty(order.ContractorAccount)) {
+                    order.ContractorAccount = platelSchet1?.Substring(platelSchet1.LastIndexOf('=') + 1);
+                }
             } else {
                 order.amountPostupilo = 0;
                 order.amountSpisano = amountValue;
-                order.date = DateTime.Parse(dataSpisano.Substring(dataSpisano.LastIndexOf('=') + 1));
+                order.date = DateTime.Parse(dataSpisano?.Substring(dataSpisano.LastIndexOf('=') + 1));
                 order.OwnerName = platelshik?.Substring(platelshik.LastIndexOf('=') + 1);
                 if (string.IsNullOrEmpty(order.OwnerName)) {
-                    order.OwnerName = platelshik1.Substring(platelshik1.LastIndexOf('=') + 1);
+                    order.OwnerName = platelshik1?.Substring(platelshik1.LastIndexOf('=') + 1);
                 }
-                order.OwnerBank = platelBank.Substring(platelBank.LastIndexOf('=') + 1);
-                order.OwnerInn = platelInn.Substring(platelInn.LastIndexOf('=') + 1);
+                order.OwnerBank = platelBank?.Substring(platelBank.LastIndexOf('=') + 1);
+                order.OwnerInn = platelInn?.Substring(platelInn.LastIndexOf('=') + 1);
                 order.OwnerKPP = platelKpp?.Substring(platelKpp.LastIndexOf('=') + 1);
-                order.OwnerAccount = platelSchet.Substring(platelSchet.LastIndexOf('=') + 1);
+                order.OwnerAccount = platelSchet?.Substring(platelSchet.LastIndexOf('=') + 1);
+                if (string.IsNullOrEmpty(order.OwnerAccount)) {
+                    order.OwnerAccount = platelSchet1?.Substring(platelSchet1.LastIndexOf('=') + 1);
+                }
                 order.ContractorName = poluchatel?.Substring(poluchatel.LastIndexOf('=') + 1);
                 if (string.IsNullOrEmpty(order.ContractorName)) {
-                    order.ContractorName = poluchatel1.Substring(poluchatel1.LastIndexOf('=') + 1);
+                    order.ContractorName = poluchatel1?.Substring(poluchatel1.LastIndexOf('=') + 1);
                 }
                 order.ContractorKPP = poluchatelKpp?.Substring(poluchatelKpp.LastIndexOf('=') + 1);
                 order.ContractorINN = poluchatelInn?.Substring(poluchatelInn.LastIndexOf('=') + 1);
-                order.ContractorBank = poluchatelBank.Substring(poluchatelBank.LastIndexOf('=') + 1);
-                order.ContractorAccount = poluchatelSchet.Substring(poluchatelSchet.LastIndexOf('=') + 1);
+                order.ContractorBank = poluchatelBank?.Substring(poluchatelBank.LastIndexOf('=') + 1);
+                order.ContractorAccount = poluchatelSchet?.Substring(poluchatelSchet.LastIndexOf('=') + 1);
+                if (string.IsNullOrEmpty(order.ContractorAccount)) {
+                    order.ContractorAccount = poluchatelSchet1?.Substring(poluchatelSchet1.LastIndexOf('=') + 1);
+                }
             }
 
             if (!string.IsNullOrEmpty(order.OwnerInn)) {
-                order.OwnerName = order.OwnerName.Replace("ИНН " + order.OwnerInn, string.Empty);
-                order.OwnerName = order.OwnerName.Replace(order.OwnerInn, string.Empty);
+                order.OwnerName = order.OwnerName?.Replace("ИНН " + order.OwnerInn, string.Empty);
+                order.OwnerName = order.OwnerName?.Replace(order.OwnerInn, string.Empty);
             }
             if (!string.IsNullOrEmpty(order.ContractorINN)) {
-                order.ContractorName = order.ContractorName.Replace("ИНН " + order.ContractorINN, string.Empty);
-                order.ContractorName = order.ContractorName.Replace(order.ContractorINN, string.Empty);
+                order.ContractorName = order.ContractorName?.Replace("ИНН " + order.ContractorINN, string.Empty);
+                order.ContractorName = order.ContractorName?.Replace(order.ContractorINN, string.Empty);
             }            
 
             order.OwnerName = ReplaceCompanyType(order.OwnerName);
@@ -211,19 +232,30 @@ namespace ASConverter {
         }
 
         private static string ReplaceCompanyType(string aCompany) {
-            return aCompany
-                .Replace("Общество с ограниченной ответственностью", "ООО")
-                .Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО")
-                .Replace("Открытое акционерное общество", "ОАО")
-                .Replace("ОТКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ОАО")
-                .Replace("Публичное акционерное общество", "ПАО")
-                .Replace("ПУБЛИЧНОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ПАО")
-                .Replace("Закрытое акционерное общество", "ЗАО")
-                .Replace("ЗАКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ЗАО")
-                .Replace("Акционерное общество", "АО")
-                .Replace("АКЦИОНЕРНОЕ ОБЩЕСТВО", "АО")
-                .Replace("Индивидуальный предприниматель", "ИП")
-                .Replace("ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ", "ИП");
+            if (string.IsNullOrEmpty(aCompany)) {
+                return aCompany;
+            }
+
+            aCompany = Regex.Replace(aCompany, "Общество с ограниченной ответственностью", "ООО", RegexOptions.IgnoreCase);
+            aCompany = Regex.Replace(aCompany, "Открытое акционерное общество", "ОАО", RegexOptions.IgnoreCase);
+            aCompany = Regex.Replace(aCompany, "Публичное акционерное общество", "ПАО", RegexOptions.IgnoreCase);
+            aCompany = Regex.Replace(aCompany, "Закрытое акционерное общество", "ЗАО", RegexOptions.IgnoreCase);
+            aCompany = Regex.Replace(aCompany, "Акционерное общество", "АО", RegexOptions.IgnoreCase);
+            aCompany = Regex.Replace(aCompany, "Индивидуальный предприниматель", "ИП", RegexOptions.IgnoreCase);
+            return aCompany;
+            //return aCompany?
+            //    .Replace("Общество с ограниченной ответственностью", "ООО")
+            //    .Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО")
+            //    .Replace("Открытое акционерное общество", "ОАО")
+            //    .Replace("ОТКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ОАО")
+            //    .Replace("Публичное акционерное общество", "ПАО")
+            //    .Replace("ПУБЛИЧНОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ПАО")
+            //    .Replace("Закрытое акционерное общество", "ЗАО")
+            //    .Replace("ЗАКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ЗАО")
+            //    .Replace("Акционерное общество", "АО")
+            //    .Replace("АКЦИОНЕРНОЕ ОБЩЕСТВО", "АО")
+            //    .Replace("Индивидуальный предприниматель", "ИП")
+            //    .Replace("ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ", "ИП");
         }
 
         private static string FindLine(string[] lines, string startStr, int startIndex) {
