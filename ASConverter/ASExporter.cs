@@ -605,8 +605,8 @@ namespace ASConverter {
             return contractor.Equals(order.ContractorName) && 
                 destination.Equals(order.PayDestination) && 
                 number == order.Number && 
-                amountSpisano == order.amountSpisano && 
-                amountPostupilo == order.amountPostupilo;
+                (amountSpisano == order.amountSpisano || 
+                amountPostupilo == order.amountPostupilo);
         }
 
         private static double GetNumericValue(ICell cell) {

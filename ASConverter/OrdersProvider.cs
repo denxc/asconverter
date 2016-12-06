@@ -168,10 +168,12 @@ namespace ASConverter {
             }            
 
             var dataPostupiloStr = dataPostupilo?.Substring(dataPostupilo.LastIndexOf('=') + 1).Trim();
-            if (!string.IsNullOrEmpty(dataPostupiloStr)) {
+            if (!string.IsNullOrEmpty(dataPostupiloStr) || (!string.IsNullOrEmpty(dataPostupilo) && string.IsNullOrEmpty(dataSpisano))) {
                 order.amountPostupilo = amountValue;
-                order.amountSpisano = 0;
-                order.date = DateTime.Parse(dataPostupilo?.Substring(dataPostupilo.LastIndexOf('=') + 1));
+                order.amountSpisano = 0;                
+                if (DateTime.TryParse(dataPostupilo?.Substring(dataPostupilo.LastIndexOf('=') + 1), out order.date) == false) {
+                    order.date = DateTime.Parse(data?.Substring(data.LastIndexOf('=') + 1));
+                }
                 order.OwnerName = poluchatel?.Substring(poluchatel.LastIndexOf('=') + 1);
                 if (string.IsNullOrEmpty(order.OwnerName)) {
                     order.OwnerName = poluchatel1?.Substring(poluchatel1.LastIndexOf('=') + 1);
