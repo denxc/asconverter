@@ -460,10 +460,9 @@ namespace ASConverter {
         private static double EvaluateEndAmount(ISheet shield) {
             var row = shield.GetRow(1);
             var prihod = row.GetCell(3);
-            var rashod = row.GetCell(4);
-
-            prihod.SetCellFormula(string.Format("SUM(D{0}: D{1})", 5, shield.LastRowNum + 1));
-            rashod.SetCellFormula(string.Format("SUM(E{0}: E{1})", 5, shield.LastRowNum + 1));
+            var rashod = row.GetCell(4);            
+            prihod.SetCellFormula(string.Format("SUM(D{0}: D{1})", 5, 1000 + shield.LastRowNum + 1));
+            rashod.SetCellFormula(string.Format("SUM(E{0}: E{1})", 5, 1000 + shield.LastRowNum + 1));            
 
             XSSFFormulaEvaluator.EvaluateAllFormulaCells(shield.Workbook);
 
@@ -600,8 +599,25 @@ namespace ASConverter {
             var contractor = row.GetCell(5).StringCellValue;
             var destination = row.GetCell(9).StringCellValue;
             var number = (int)row.GetCell(10).NumericCellValue;
+            var amountSpisano = GetNumericValue(row.GetCell(4));
+            var amountPostupilo = GetNumericValue(row.GetCell(5));
 
-            return contractor.Equals(order.ContractorName) && destination.Equals(order.PayDestination) && number == order.Number;
+            return contractor.Equals(order.ContractorName) && 
+                destination.Equals(order.PayDestination) && 
+                number == order.Number && 
+                amountSpisano == order.amountSpisano && 
+                amountPostupilo == order.amountPostupilo;
+        }
+
+        private static double GetNumericValue(ICell cell) {
+            double result;
+            try {
+                result = cell.NumericCellValue;
+            } catch {
+                result = double.MinValue;
+            }
+
+            return result;
         }
 
         private static IRow InsertRow(ISheet shield, int destinationRowNum) {

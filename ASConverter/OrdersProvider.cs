@@ -14,6 +14,7 @@ namespace ASConverter {
 
         private static string DATA_SPISANO = "ДатаСписано";
         private static string DATA_POSTUPILO = "ДатаПоступило";
+        private static string DATA = "Дата=";
         private static string PLATELSHIK = "Плательщик=";
         private static string PLATELSHIK1 = "Плательщик1=";
         private static string PLATEL_SCHET = "ПлательщикРасчСчет";
@@ -43,7 +44,7 @@ namespace ASConverter {
         private static string START_DATE = "ДатаНачала";
         private static string END_DATE = "ДатаКонца";
 
-        public static List<OrderEntity> LoadOrders(string aFileName, out AccountSection aStartAmount, out AccountSection aEndAmount) {
+        public static List<OrderEntity> LoadOrders(string aFileName, out AccountSection aStartAmount, out AccountSection aEndAmount, out string errors) {
             var orders = new List<OrderEntity>();            
             var lines = File.ReadAllLines(aFileName, Encoding.GetEncoding("Windows-1251"));
             var accountSections = LoadAccountSections(lines);
@@ -54,18 +55,29 @@ namespace ASConverter {
             aStartAmount = accountSections[0];
             accountSections.Sort(new AccountSectionSorterByEndDate());
             aEndAmount = accountSections[accountSections.Count - 1];
-                        
+            var terrors = "Не загружены операции: ";
+            var errorsCount = 0;
             for (var i = 0; i < lines.Length; ++i) {                
                 if (lines[i].StartsWith(START_ORDER)) {
+                    var lastNumber = -1;
                     try {
                         var order = LoadOrder(lines, i + 1);
-                        orders.Add(order);
+                        if (order != null) {
+                            lastNumber = order.Number;
+                        }
+                        orders.Add(order);                        
                         Application.DoEvents();
                     } catch (Exception ex) {
-                        
+                        terrors += lastNumber + " ";
+                        errorsCount++;
                     }
                 }
-            }            
+            }
+
+            errors = null;
+            if (errorsCount > 0) {
+                errors = terrors;
+            }
 
             return orders;
         }
@@ -107,6 +119,7 @@ namespace ASConverter {
             var order = new OrderEntity();
             order.WasAdded = false;
             var amount = FindLine(lines, AMOUNT, startIndex).Replace('.', ',');
+            var data = FindLine(lines, DATA, startIndex);
             var dataSpisano = FindLine(lines, DATA_SPISANO, startIndex);
             var dataPostupilo = FindLine(lines, DATA_POSTUPILO, startIndex);
 
@@ -126,7 +139,7 @@ namespace ASConverter {
             var poluchatelSchet1 = FindLine(lines, POLUCHAT_SCHET1, startIndex);
             var poluchatelInn = FindLine(lines, POLUCHAT_INN, startIndex);
             var poluchatelKpp = FindLine(lines, POLUCHAT_KPP, startIndex);
-            var poluchatelBank = FindLine(lines, POLUCHAT_BANK, startIndex);
+            var poluchatelBank = FindLine(lines, POLUCHAT_BANK, startIndex);            
 
             var destination = FindLine(lines, DESTINATION, startIndex);
             order.PayDestination = destination.Substring(destination.IndexOf('=') + 1);
@@ -154,8 +167,8 @@ namespace ASConverter {
                 order.NdsSum = Math.Round(order.NdsSum, 2);
             }            
 
-            var dataSpisanoStr = dataSpisano?.Substring(dataSpisano.LastIndexOf('=') + 1).Trim();
-            if (string.IsNullOrEmpty(dataSpisanoStr)) {
+            var dataPostupiloStr = dataPostupilo?.Substring(dataPostupilo.LastIndexOf('=') + 1).Trim();
+            if (!string.IsNullOrEmpty(dataPostupiloStr)) {
                 order.amountPostupilo = amountValue;
                 order.amountSpisano = 0;
                 order.date = DateTime.Parse(dataPostupilo?.Substring(dataPostupilo.LastIndexOf('=') + 1));
@@ -183,8 +196,10 @@ namespace ASConverter {
                 }
             } else {
                 order.amountPostupilo = 0;
-                order.amountSpisano = amountValue;
-                order.date = DateTime.Parse(dataSpisano?.Substring(dataSpisano.LastIndexOf('=') + 1));
+                order.amountSpisano = amountValue;                
+                if (DateTime.TryParse(dataSpisano?.Substring(dataSpisano.LastIndexOf('=') + 1), out order.date) == false) {
+                    order.date = DateTime.Parse(data?.Substring(data.LastIndexOf('=') + 1));
+                }                 
                 order.OwnerName = platelshik?.Substring(platelshik.LastIndexOf('=') + 1);
                 if (string.IsNullOrEmpty(order.OwnerName)) {
                     order.OwnerName = platelshik1?.Substring(platelshik1.LastIndexOf('=') + 1);
@@ -242,20 +257,7 @@ namespace ASConverter {
             aCompany = Regex.Replace(aCompany, "Закрытое акционерное общество", "ЗАО", RegexOptions.IgnoreCase);
             aCompany = Regex.Replace(aCompany, "Акционерное общество", "АО", RegexOptions.IgnoreCase);
             aCompany = Regex.Replace(aCompany, "Индивидуальный предприниматель", "ИП", RegexOptions.IgnoreCase);
-            return aCompany;
-            //return aCompany?
-            //    .Replace("Общество с ограниченной ответственностью", "ООО")
-            //    .Replace("ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ", "ООО")
-            //    .Replace("Открытое акционерное общество", "ОАО")
-            //    .Replace("ОТКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ОАО")
-            //    .Replace("Публичное акционерное общество", "ПАО")
-            //    .Replace("ПУБЛИЧНОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ПАО")
-            //    .Replace("Закрытое акционерное общество", "ЗАО")
-            //    .Replace("ЗАКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО", "ЗАО")
-            //    .Replace("Акционерное общество", "АО")
-            //    .Replace("АКЦИОНЕРНОЕ ОБЩЕСТВО", "АО")
-            //    .Replace("Индивидуальный предприниматель", "ИП")
-            //    .Replace("ИНДИВИДУАЛЬНЫЙ ПРЕДПРИНИМАТЕЛЬ", "ИП");
+            return aCompany;            
         }
 
         private static string FindLine(string[] lines, string startStr, int startIndex) {

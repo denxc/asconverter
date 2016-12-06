@@ -220,7 +220,11 @@ namespace ASConverter {
 
         private OrderEntity[] TryLoadOrders(string aTextFile, out AccountSection aStartAmount, out AccountSection aEndAmount) {
             try {
-                var orders = OrdersProvider.LoadOrders(aTextFile, out aStartAmount, out aEndAmount);
+                string errors;
+                var orders = OrdersProvider.LoadOrders(aTextFile, out aStartAmount, out aEndAmount, out errors);
+                if (!string.IsNullOrEmpty(errors)) {
+                    MessageBox.Show(errors);
+                }
                 return orders.ToArray();
             } catch (Exception ex) {
                 MessageBox.Show("При загрузке операций из файла произошла ошибка: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
