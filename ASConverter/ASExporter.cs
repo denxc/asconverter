@@ -8,6 +8,7 @@ using System.IO;
 using NPOI.SS.UserModel;
 using NPOI.HSSF.Util;
 using NPOI.XSSF.UserModel;
+using NPOI.SS.Util;
 
 namespace ASConverter {
     public class ASExporter {
@@ -70,7 +71,7 @@ namespace ASConverter {
             return string.Empty;
         }
 
-        public static void CreateNewShield(string aXlsFile, string shieldName, OrderEntity aOrder, AccountSection aStartAccountSection, AccountSection aEndAccountSection) {
+        public static void CreateNewShield(string aXlsFile, string shieldName, OrderEntity[] aOrders, AccountSection aStartAccountSection, AccountSection aEndAccountSection) {
             HSSFWorkbook wb = null;
             using (var fs = new FileStream(aXlsFile, FileMode.Open, FileAccess.Read)) {
                 wb = new HSSFWorkbook(fs);
@@ -81,7 +82,7 @@ namespace ASConverter {
             if (defaultReportShield == null) {
                 defaultReportShield = wb.CreateSheet(DEFAULT_REPORT);
                 wb.SetSheetOrder(DEFAULT_REPORT, 0);
-                PrepareShieldTop(defaultReportShield, aOrder, aStartAccountSection, aEndAccountSection);
+                PrepareShieldTop(defaultReportShield, aOrders, aStartAccountSection, aEndAccountSection);
             } else {
                 var row = defaultReportShield.GetRow(0);
                 var cell = row.GetCell(3);
@@ -93,7 +94,7 @@ namespace ASConverter {
 
             var sheet = wb.CreateSheet(shieldName);
             wb.SetSheetOrder(shieldName, defaultReportIndex);
-            PrepareShieldTop(sheet, aOrder, aStartAccountSection, aEndAccountSection);            
+            PrepareShieldTop(sheet, aOrders, aStartAccountSection, aEndAccountSection);            
 
             wb.SetActiveSheet(defaultReportIndex);
 
@@ -103,7 +104,7 @@ namespace ASConverter {
             }
         }
 
-        private static void PrepareShieldTop(ISheet sheet, OrderEntity aOrder, AccountSection aStartAccountSection, AccountSection aEndAccountSection) {
+        private static void PrepareShieldTop(ISheet sheet, OrderEntity[] aOrders, AccountSection aStartAccountSection, AccountSection aEndAccountSection) {
             var boldFont = sheet.Workbook.CreateFont();
             boldFont.FontName = "Calibri";
             boldFont.FontHeightInPoints = 11;            
@@ -193,6 +194,16 @@ namespace ASConverter {
             cell.SetCellValue(aStartAccountSection.StartAmount);
             cell.CellStyle = doubleCellDefaultStyle;
 
+            var aOrder = aOrders[0];
+            var ownerKpp = string.Empty;
+            for (var i = 0; i < aOrders.Length; ++i) {
+                if (!string.IsNullOrEmpty(aOrders[i].OwnerKPP)) {
+                    ownerKpp = aOrders[i].OwnerKPP;
+                    break;
+                }
+            }
+
+
             row = sheet.CreateRow(1);
             row.Height = DEFAULT_ROW_HEIGHT;
             cell = row.CreateCell(0, CellType.String);            
@@ -216,7 +227,7 @@ namespace ASConverter {
             cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerInn) ? string.Empty : aOrder.OwnerInn);
             cell.CellStyle = stringCellDefaultStyle;
             cell = row.CreateCell(11, CellType.String);                        
-            cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerKPP) ? string.Empty : aOrder.OwnerKPP);
+            cell.SetCellValue(string.IsNullOrEmpty(ownerKpp) ? string.Empty : ownerKpp);
             cell.CellStyle = stringCellDefaultLeftStyle;
             cell = row.CreateCell(12, CellType.String);                        
             cell.SetCellValue(string.IsNullOrEmpty(aOrder.OwnerAccount) ? string.Empty : aOrder.OwnerAccount);
@@ -236,8 +247,7 @@ namespace ASConverter {
             if (!sheet.SheetName.Equals(DEFAULT_REPORT)) {
                 cell.CellStyle = dataCellStyle;
                 cell.SetCellValue(aEndAccountSection.EndData.Date);
-            }            
-            //sheet.AddMergedRegion(new NPOI.SS.Util.CellRangeAddress(2, 2, 0, 2));
+            }                        
             cell = row.CreateCell(3, CellType.Numeric);            
             cell.SetCellFormula("D1+D2-E2");
             cell.CellStyle = doubleCellBoldStyle;            
@@ -253,7 +263,7 @@ namespace ASConverter {
                 cell = row.CreateCell(i);
                 cell.CellStyle = stringCellBoldStyle;
                 cell.SetCellValue(defaultColumns[i]);
-            }
+            }            
 
             sheet.SetColumnWidth(0, (int)(2.63 * rowWidthMultiplicator));
             sheet.SetColumnWidth(1, (int)(2.63 * rowWidthMultiplicator));
@@ -365,6 +375,10 @@ namespace ASConverter {
             LoadCellStyles(wb);            
 
             var defaultReport = wb.GetSheet(DEFAULT_REPORT);
+
+            defaultReport.SetAutoFilter(new CellRangeAddress(3, 3, 0, defaultColumns.Length - 1));
+            shield.SetAutoFilter(new CellRangeAddress(3, 3, 0, defaultColumns.Length - 1));
+
             foreach (var order in orders) {
                 if (AddOrdeToShield(shield, order)) {
                     AddOrdeToShield(defaultReport, order);
@@ -539,6 +553,9 @@ namespace ASConverter {
             // сумма ндс.            
             cell = row.CreateCell(8);            
             if (order.Nds < 0) {
+                if (order.Nds == -1) {
+                    cell.SetCellValue(0.0);
+                }
                 //cell.SetCellValue(string.Empty);
             } else {                
                 cell.SetCellValue(order.NdsSum);

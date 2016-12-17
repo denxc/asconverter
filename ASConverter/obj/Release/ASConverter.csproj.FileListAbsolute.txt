@@ -23,3 +23,15 @@ C:\Users\Zinchenko\Desktop\asconverter\ASConverter\bin\Release\NPOI.dll
 C:\Users\Zinchenko\Desktop\asconverter\ASConverter\bin\Release\NPOI.OOXML.dll
 C:\Users\Zinchenko\Desktop\asconverter\ASConverter\bin\Release\NPOI.OpenXml4Net.dll
 C:\Users\Zinchenko\Desktop\asconverter\ASConverter\bin\Release\NPOI.OpenXmlFormats.dll
+C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\ASConverter.exe.config
+C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.exe
+C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.pdb
+C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\ASConverter.exe
+C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\ASConverter.pdb
+C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\NPOI.dll
+C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\NPOI.OOXML.dll
+C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\NPOI.OpenXml4Net.dll
+C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\NPOI.OpenXmlFormats.dll
+C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.MainForm.resources
+C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.Properties.Resources.resources
+C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.csproj.GenerateResource.Cache

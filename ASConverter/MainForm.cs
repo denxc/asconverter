@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Windows.Forms;
 
@@ -175,7 +176,7 @@ namespace ASConverter {
                 return false;
             }            
 
-            if (TryCheckCompanyCorrection(destFilePath, orders[0]) == false) {
+            if (TryCheckCompanyCorrection(destFilePath, orders) == false) {
                 var dialogResult = MessageBox.Show(
                     string.Format("Нельзя добавить операции компании {0} в файл, содержащий операции другой компании. \nУбедитель в правильности выбора файла назначения.", orders[0].OwnerName), 
                     "Оповещение", 
@@ -183,7 +184,7 @@ namespace ASConverter {
                 return false;                
             }
 
-            if (TryCheckShieldCorrection(destFilePath, orders[0], startAmount, endAmount) == false) {
+            if (TryCheckShieldCorrection(destFilePath, orders, startAmount, endAmount) == false) {
                 return false;
             }
             
@@ -198,7 +199,7 @@ namespace ASConverter {
             }
         }
 
-        private bool TryCheckShieldCorrection(string aXlsFile, OrderEntity orderEntity, AccountSection aStartAmount, AccountSection aEndAmount) {
+        private bool TryCheckShieldCorrection(string aXlsFile, OrderEntity[] ordersEntity, AccountSection aStartAmount, AccountSection aEndAmount) {
             try {
                 var destShield = selectedShieldBox.Text;
                 var shields = ASExporter.GetShields(aXlsFile);
@@ -210,7 +211,7 @@ namespace ASConverter {
                     }
                 }
 
-                ASExporter.CreateNewShield(aXlsFile, destShield, orderEntity, aStartAmount, aEndAmount);
+                ASExporter.CreateNewShield(aXlsFile, destShield, ordersEntity, aStartAmount, aEndAmount);
                 return true;
             } catch (Exception ex) {
                 MessageBox.Show("Ошибка при создании листа: " + ex.Message);
@@ -234,14 +235,14 @@ namespace ASConverter {
             }
         }
 
-        private bool TryCheckCompanyCorrection(string aXlsFile, OrderEntity aOrder) {
+        private bool TryCheckCompanyCorrection(string aXlsFile, OrderEntity[] aOrders) {
             if (string.IsNullOrEmpty(aXlsFile) || !File.Exists(aXlsFile)) {
                 return false;
             }            
             try {
                 var companyImm = ASExporter.GetCompanyInn(aXlsFile);
 
-                if (string.IsNullOrEmpty(companyImm) || companyImm.Equals(aOrder.OwnerInn)) {
+                if (string.IsNullOrEmpty(companyImm) || aOrders.Any(o => o.OwnerInn.Equals(companyImm))) {
                     return true;
                 }
             } catch (Exception ex) {
