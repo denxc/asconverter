@@ -556,6 +556,11 @@ namespace ASConverter {
                 if (order.Nds == -1) {
                     cell.SetCellValue(0.0);
                 }
+                if (order.Nds == -2) {
+                    if (order.NdsSum != double.MinValue) {
+                        cell.SetCellValue(order.NdsSum);
+                    }
+                }
                 //cell.SetCellValue(string.Empty);
             } else {                
                 cell.SetCellValue(order.NdsSum);

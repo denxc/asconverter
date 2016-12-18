@@ -159,10 +159,11 @@ namespace ASConverter {
                     order.Nds = 0;
                 } else {
                     order.Nds = -2;
+                    order.NdsSum = TryGetNdsSum(order.PayDestination);
                 }
             }
 
-            if (order.Nds != -1) {
+            if (order.Nds >= 0) {
                 order.NdsSum = order.Nds * ((1.0 * amountValue) / (100.0 + order.Nds));
                 order.NdsSum = Math.Round(order.NdsSum, 2);
             }            
@@ -246,6 +247,37 @@ namespace ASConverter {
             }
 
             return order;                                 
+        }
+
+        private static double TryGetNdsSum(string payDestination) {
+            var temporary = payDestination
+                .ToLower()
+                .Replace(" ", "")
+                .Replace(".", ",")
+                .Replace("-", ",")
+                .Replace("руб.", "")
+                .Replace("рублей.", "")
+                .Replace("р.", "");
+            var ndsSum = string.Empty;
+            for (var i = temporary.Length - 1; i >= 0; --i) {
+                if (temporary[i] >= '0' && temporary[i] <= '9' || temporary[i] == ',') {
+                    ndsSum += temporary[i];
+                } else {
+                    break;
+                }
+            }
+            if (!string.IsNullOrEmpty(ndsSum)) {
+                var chararray = ndsSum.ToCharArray();
+                Array.Reverse(chararray);
+                ndsSum = new string(chararray);
+
+                double result;
+                if (double.TryParse(ndsSum, out result)) {
+                    return result;
+                }
+            }
+
+            return double.MinValue;
         }
 
         private static string ReplaceCompanyType(string aCompany) {

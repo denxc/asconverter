@@ -35,3 +35,4 @@ C:\Users\Дарья\Desktop\asconverter\ASConverter\bin\Release\NPOI.OpenXmlForm
 C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.MainForm.resources
 C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.Properties.Resources.resources
 C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.csproj.GenerateResource.Cache
+C:\Users\Дарья\Desktop\asconverter\ASConverter\obj\Release\ASConverter.csprojResolveAssemblyReference.cache
