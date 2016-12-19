@@ -136,7 +136,7 @@ namespace ASConverter {
         }
 
         private void оПрограммеToolStripMenuItem1_Click(object sender, EventArgs e) {
-            MessageBox.Show("Версия 2.3");
+            MessageBox.Show("Версия 2.5");
         }
 
         private void button1_Click(object sender, EventArgs e) {
