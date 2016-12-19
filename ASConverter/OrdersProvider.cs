@@ -34,7 +34,7 @@ namespace ASConverter {
         private static string DESTINATION = "НазначениеПлатежа";
 
         private static string NO_NDS = "безндс";
-        private static string NO_NDS1 = "ндснеоблагается";
+        private static string NO_NDS1 = "ндснеобл";
         private static string NO_NDS2 = "безналога";
 
         private static string ACCOUNT_SECTION_START = "СекцияРасчСчет";
@@ -250,7 +250,8 @@ namespace ASConverter {
         }
 
         private static double TryGetNdsSum(string payDestination) {
-            var temporary = payDestination
+            try {
+                var temporary = payDestination
                 .ToLower()
                 .Replace(" ", "")
                 .Replace(".", ",")
@@ -258,23 +259,25 @@ namespace ASConverter {
                 .Replace("руб.", "")
                 .Replace("рублей.", "")
                 .Replace("р.", "");
-            var ndsSum = string.Empty;
-            for (var i = temporary.Length - 1; i >= 0; --i) {
-                if (temporary[i] >= '0' && temporary[i] <= '9' || temporary[i] == ',') {
-                    ndsSum += temporary[i];
-                } else {
-                    break;
+                var ndsSum = string.Empty;
+                for (var i = temporary.Length - 1; i >= 0; --i) {
+                    if (temporary[i] >= '0' && temporary[i] <= '9' || temporary[i] == ',') {
+                        ndsSum += temporary[i];
+                    } else {
+                        break;
+                    }
                 }
-            }
-            if (!string.IsNullOrEmpty(ndsSum)) {
-                var chararray = ndsSum.ToCharArray();
-                Array.Reverse(chararray);
-                ndsSum = new string(chararray);
+                if (!string.IsNullOrEmpty(ndsSum)) {
+                    var chararray = ndsSum.ToCharArray();
+                    Array.Reverse(chararray);
+                    ndsSum = new string(chararray);
 
-                double result;
-                if (double.TryParse(ndsSum, out result)) {
-                    return result;
+                    double result;
+                    if (double.TryParse(ndsSum, out result)) {
+                        return result;
+                    }
                 }
+            } catch (Exception ex) {                
             }
 
             return double.MinValue;

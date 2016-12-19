@@ -10,7 +10,6 @@ D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.dll
 D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.OOXML.dll
 D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.OpenXml4Net.dll
 D:\repositories\denxc\asconverter\ASConverter\bin\Debug\NPOI.OpenXmlFormats.dll
-D:\repositories\denxc\asconverter\ASConverter\obj\Debug\ASConverter.csprojResolveAssemblyReference.cache
 C:\Users\Zinchenko\Desktop\asconverter\ASConverter\bin\Debug\ASConverter.exe.config
 C:\Users\Zinchenko\Desktop\asconverter\ASConverter\obj\Debug\ASConverter.exe
 C:\Users\Zinchenko\Desktop\asconverter\ASConverter\obj\Debug\ASConverter.pdb
